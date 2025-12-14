@@ -4,14 +4,90 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>暴走英雄坛真元效率计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              game: {
+                dark: 'var(--bg-main)',
+                panel: 'var(--bg-panel)',
+                accent: 'var(--col-accent)',
+                success: 'var(--col-success)',
+                warning: 'var(--col-warning)',
+                danger: 'var(--col-danger)',
+                text: 'var(--col-text-main)',
+                muted: 'var(--col-text-muted)',
+                highlight: 'var(--col-highlight)',
+                border: 'var(--col-border)'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        /* Default Dark Theme (Softened) */
+        --bg-main: #1a1b26;
+        --bg-panel: #24283b;
+        --col-text-main: #c0caf5;
+        --col-text-muted: #787c99;
+        --col-border: #414868;
+        
+        --col-accent: #7aa2f7;      /* Soft Blue */
+        --col-success: #9ece6a;     /* Soft Green */
+        --col-warning: #e0af68;     /* Soft Orange */
+        --col-danger: #f7768e;      /* Soft Red */
+        --col-highlight: #bb9af7;   /* Soft Purple */
+      }
+
+      /* Light Theme */
+      body.theme-light {
+        --bg-main: #f0f2f5;
+        --bg-panel: #ffffff;
+        --col-text-main: #374151;
+        --col-text-muted: #6b7280;
+        --col-border: #e5e7eb;
+
+        --col-accent: #3b82f6;      /* Vivid Blue */
+        --col-success: #10b981;     /* Vivid Green */
+        --col-warning: #f59e0b;     /* Vivid Orange */
+        --col-danger: #ef4444;      /* Vivid Red */
+        --col-highlight: #8b5cf6;   /* Vivid Purple */
+      }
+
+      body {
+        background-color: var(--bg-main);
+        color: var(--col-text-main);
+        transition: background-color 0.3s, color 0.3s;
+      }
+      
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--col-border); 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--col-text-muted); 
+      }
+    </style>
   <script type="importmap">
 {
   "imports": {
-    "vite": "https://esm.sh/vite@^7.2.7",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "vite": "https://esm.sh/vite@^7.2.7",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
   }
 }
 </script>
