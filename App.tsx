@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ConfigPanel from './components/ConfigPanel';
 import ZhenyuanTable from './components/ZhenyuanTable';
 import ResultSummary from './components/ResultSummary';
@@ -6,28 +6,97 @@ import HelpModal from './components/HelpModal';
 import { MartialArtConfig, OptimizationResult } from './types';
 import { optimize } from './utils/math';
 
+const STORAGE_KEY = 'zhenyuan_calc_state_v1';
+
 const App: React.FC = () => {
   // Theme State
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showHelp, setShowHelp] = useState(false);
 
-  // App Data State
-  const [arts, setArts] = useState<MartialArtConfig[]>([
-    { id: '1', difficulty: 1.5, isMain: true, targetLevel: 99, count: 1 },
-    { id: '2', difficulty: 1.2, isMain: false, targetLevel: 99, count: 2 },
-  ]);
-  const [speed, setSpeed] = useState<number>(350000);
-  const [reduction, setReduction] = useState<number>(0);
-  const [targetType, setTargetType] = useState<'zhenyuan' | 'time'>('zhenyuan');
-  const [targetValue, setTargetValue] = useState<number>(50000); 
-  
+  // App Data State (Initialized from LocalStorage)
+  const [arts, setArts] = useState<MartialArtConfig[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.arts) return parsed.arts;
+      }
+    } catch (e) {
+      console.error('Failed to load arts', e);
+    }
+    return [
+      { id: '1', difficulty: 1.5, isMain: true, targetLevel: 99, count: 1 },
+      { id: '2', difficulty: 1.2, isMain: false, targetLevel: 99, count: 2 },
+    ];
+  });
+
+  const [speed, setSpeed] = useState<number>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved).speed || 350000 : 350000;
+  });
+
+  const [reduction, setReduction] = useState<number>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved).reduction || 0 : 0;
+  });
+
+  const [targetType, setTargetType] = useState<'zhenyuan' | 'time' | 'level'>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return (saved ? JSON.parse(saved).targetType : null) || 'zhenyuan';
+  });
+
+  const [targetValue, setTargetValue] = useState<number>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return (saved ? JSON.parse(saved).targetValue : null) || 50000;
+  });
+
+  const [referenceArtId, setReferenceArtId] = useState<string | undefined>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved).referenceArtId : undefined;
+  });
+
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  
+  // Track if initial mount is done to avoid saving default state over potential existing state if we used useEffect for loading
+  // (But since we use lazy initialization, we are safe)
+
+  // Save to LocalStorage whenever critical state changes
+  useEffect(() => {
+    const stateToSave = {
+      arts,
+      speed,
+      reduction,
+      targetType,
+      targetValue,
+      referenceArtId
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+  }, [arts, speed, reduction, targetType, targetValue, referenceArtId]);
 
   // Apply Theme
   useEffect(() => {
     document.body.className = `theme-${theme}`;
   }, [theme]);
+
+  // Handle switching target types logic
+  const prevTargetType = useRef(targetType);
+  useEffect(() => {
+     if (prevTargetType.current !== targetType) {
+        if (targetType === 'level') {
+            // Set default target value to a reasonable level if it was a huge zhenyuan number
+            if (targetValue > 1000) setTargetValue(399);
+            // Set default ref art
+            if (!referenceArtId && arts.length > 0) setReferenceArtId(arts[0].id);
+        } else if (targetType === 'zhenyuan') {
+            if (targetValue < 1000) setTargetValue(50000);
+        } else if (targetType === 'time') {
+            if (targetValue > 20000) setTargetValue(500); // Reset from zhenyuan to reasonable hours
+            if (targetValue < 10 && targetValue > 0) setTargetValue(500); // Reset from level? Level is usually > 99
+        }
+        prevTargetType.current = targetType;
+     }
+  }, [targetType, targetValue, referenceArtId, arts]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
@@ -35,17 +104,19 @@ const App: React.FC = () => {
 
   const handleCalculate = useCallback(() => {
     setIsCalculating(true);
+    // Use timeout to allow UI to render spinner before heavy calc
     setTimeout(() => {
       const res = optimize(arts, {
         speed,
         reduction,
         targetType,
-        targetValue
+        targetValue,
+        referenceArtId
       });
       setResult(res);
       setIsCalculating(false);
     }, 100);
-  }, [arts, speed, reduction, targetType, targetValue]);
+  }, [arts, speed, reduction, targetType, targetValue, referenceArtId]);
 
   // Derived Stats
   const globalEfficiency = useMemo(() => {
@@ -95,6 +166,8 @@ const App: React.FC = () => {
             setTargetType={setTargetType}
             targetValue={targetValue}
             setTargetValue={setTargetValue}
+            referenceArtId={referenceArtId}
+            setReferenceArtId={setReferenceArtId}
             onCalculate={handleCalculate}
             isCalculating={isCalculating}
           />

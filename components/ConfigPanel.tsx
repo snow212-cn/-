@@ -1,5 +1,5 @@
 import React from 'react';
-import { Difficulty, MartialArtConfig } from '../types';
+import { MartialArtConfig } from '../types';
 
 interface ConfigPanelProps {
   arts: MartialArtConfig[];
@@ -8,10 +8,12 @@ interface ConfigPanelProps {
   setSpeed: (val: number) => void;
   reduction: number;
   setReduction: (val: number) => void;
-  targetType: 'zhenyuan' | 'time';
-  setTargetType: (val: 'zhenyuan' | 'time') => void;
+  targetType: 'zhenyuan' | 'time' | 'level';
+  setTargetType: (val: 'zhenyuan' | 'time' | 'level') => void;
   targetValue: number;
   setTargetValue: (val: number) => void;
+  referenceArtId: string | undefined;
+  setReferenceArtId: (val: string) => void;
   onCalculate: () => void;
   isCalculating: boolean;
 }
@@ -27,6 +29,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   setTargetType,
   targetValue,
   setTargetValue,
+  referenceArtId,
+  setReferenceArtId,
   onCalculate,
   isCalculating
 }) => {
@@ -37,12 +41,29 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   };
 
   const removeArt = (id: string) => {
-    setArts(arts.filter(a => a.id !== id));
+    const newArts = arts.filter(a => a.id !== id);
+    setArts(newArts);
+    if (referenceArtId === id) {
+        // If we removed the reference art, try to set a new one or clear it
+        if (newArts.length > 0) {
+            setReferenceArtId(newArts[0].id);
+        } else {
+            setReferenceArtId('');
+            if (targetType === 'level') setTargetType('zhenyuan');
+        }
+    }
   };
 
   const updateArt = (id: string, field: keyof MartialArtConfig, value: any) => {
     setArts(arts.map(a => a.id === id ? { ...a, [field]: value } : a));
   };
+
+  // Ensure referenceArtId is valid
+  React.useEffect(() => {
+      if (targetType === 'level' && !referenceArtId && arts.length > 0) {
+          setReferenceArtId(arts[0].id);
+      }
+  }, [targetType, arts, referenceArtId, setReferenceArtId]);
 
   return (
     <div className="bg-game-panel p-4 rounded-lg shadow-sm flex flex-col gap-6 h-full overflow-y-auto custom-scrollbar">
@@ -84,33 +105,73 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
            <h3 className="text-lg font-semibold text-game-warning flex items-center gap-2">
              <span>🎯</span> 目标设定
            </h3>
-           <div className="flex bg-game-dark rounded p-1 border border-game-border">
+           <div className="flex bg-game-dark rounded p-1 border border-game-border flex-wrap">
              <button 
-                className={`flex-1 py-2 rounded text-sm transition-all font-medium ${targetType === 'zhenyuan' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
+                className={`flex-1 py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'zhenyuan' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
                 onClick={() => setTargetType('zhenyuan')}
              >
                目标真元
              </button>
              <button 
-                className={`flex-1 py-2 rounded text-sm transition-all font-medium ${targetType === 'time' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
+                className={`flex-1 py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'time' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
                 onClick={() => setTargetType('time')}
              >
                目标时间
              </button>
+             <button 
+                className={`flex-1 py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'level' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
+                onClick={() => setTargetType('level')}
+             >
+               指定等级
+             </button>
            </div>
            
-           <div>
-            <label className="block text-sm text-game-muted mb-1">
-              {targetType === 'zhenyuan' ? '预期总真元' : '预期总时间 (小时)'}
-            </label>
-            <input 
-              type="number" 
-              value={targetValue}
-              step={targetType === 'zhenyuan' ? 1000 : 10}
-              onChange={(e) => setTargetValue(Number(e.target.value))}
-              className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono text-lg transition-colors"
-            />
-          </div>
+           {targetType === 'level' ? (
+              <div className="space-y-3 p-3 bg-gray-800/30 rounded border border-gray-700/50">
+                  <div>
+                      <label className="block text-xs text-game-muted mb-1">基准武学 (以此为参照)</label>
+                      <select 
+                        value={referenceArtId || ''}
+                        onChange={(e) => setReferenceArtId(e.target.value)}
+                        className="w-full bg-game-dark border border-game-border rounded px-2 py-1.5 text-game-text text-sm focus:border-game-accent outline-none"
+                      >
+                          {arts.map((art, idx) => (
+                              <option key={art.id} value={art.id}>
+                                  {art.isMain ? '★' : '☆'} 难度 {art.difficulty.toFixed(1)} (x{art.count})
+                              </option>
+                          ))}
+                      </select>
+                  </div>
+                  <div>
+                      <label className="block text-xs text-game-muted mb-1">目标等级 (Ending in 9)</label>
+                      <input 
+                        type="number"
+                        min={99}
+                        max={599}
+                        step={10} 
+                        value={targetValue}
+                        onChange={(e) => setTargetValue(Number(e.target.value))}
+                        className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono text-lg transition-colors"
+                      />
+                  </div>
+                  <p className="text-[10px] text-gray-500 leading-tight">
+                      系统将计算该武学达到此等级时的效率，并寻找其他武学的最佳匹配等级。
+                  </p>
+              </div>
+           ) : (
+              <div>
+                <label className="block text-sm text-game-muted mb-1">
+                  {targetType === 'zhenyuan' ? '预期总真元' : '预期总时间 (小时)'}
+                </label>
+                <input 
+                  type="number" 
+                  value={targetValue}
+                  step={targetType === 'zhenyuan' ? 1000 : 10}
+                  onChange={(e) => setTargetValue(Number(e.target.value))}
+                  className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono text-lg transition-colors"
+                />
+              </div>
+           )}
         </div>
       </div>
 
@@ -129,7 +190,14 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         
         <div className="space-y-3">
           {arts.map((art) => (
-            <div key={art.id} className="bg-game-dark p-3 rounded border border-game-border flex flex-col gap-3 relative group hover:border-game-muted transition-colors">
+            <div 
+                key={art.id} 
+                className={`bg-game-dark p-3 rounded border flex flex-col gap-3 relative group transition-all ${
+                    targetType === 'level' && referenceArtId === art.id 
+                    ? 'border-game-accent ring-1 ring-game-accent shadow-[0_0_10px_rgba(59,130,246,0.1)]' 
+                    : 'border-game-border hover:border-game-muted'
+                }`}
+            >
                <button 
                 onClick={() => removeArt(art.id)}
                 className="absolute top-2 right-2 text-game-muted hover:text-game-danger p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -137,6 +205,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                  ✕
                </button>
                
+               {targetType === 'level' && referenceArtId === art.id && (
+                   <div className="absolute top-0 right-8 bg-game-accent text-[9px] text-white px-2 py-0.5 rounded-b font-bold shadow-sm">
+                       基准
+                   </div>
+               )}
+
                <div className="flex gap-3">
                  <div className="flex-1">
                    <label className="text-[10px] uppercase tracking-wider block text-game-muted mb-1">难度</label>
@@ -174,6 +248,15 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                      {art.isMain ? "★ 主武学" : "☆ 副武学"}
                    </span>
                  </label>
+                 
+                 {targetType === 'level' && referenceArtId !== art.id && (
+                     <button 
+                        onClick={() => setReferenceArtId(art.id)}
+                        className="text-[10px] text-game-accent underline hover:text-white ml-auto"
+                     >
+                         设为基准
+                     </button>
+                 )}
                </div>
             </div>
           ))}
