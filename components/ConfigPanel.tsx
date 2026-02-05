@@ -278,7 +278,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               正在计算...
             </>
           ) : (
-            '🚀 计算'
+            '🚀 计算最优方案'
           )}
         </button>
       </div>
