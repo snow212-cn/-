@@ -132,9 +132,9 @@ const App: React.FC = () => {
   }, [result]);
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-game-dark text-game-text font-sans">
+    <div className="min-h-screen w-full flex flex-col md:h-screen md:overflow-hidden bg-game-dark text-game-text font-sans">
       {/* Header */}
-      <header className="h-14 bg-game-panel border-b border-game-border flex items-center px-4 sm:px-6 shadow-sm z-20 shrink-0 justify-between">
+      <header className="h-14 bg-game-panel border-b border-game-border flex items-center px-4 sm:px-6 shadow-sm z-20 shrink-0 justify-between sticky top-0 md:relative">
         <h1 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-game-accent to-game-highlight truncate">
           暴走英雄坛 · 真元效率计算器
         </h1>
@@ -158,10 +158,10 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      <div className="flex-1 flex flex-col md:flex-row md:overflow-hidden relative">
         
         {/* Left: Configuration */}
-        <aside className="w-full md:w-80 lg:w-96 p-4 shrink-0 bg-game-dark z-10 border-r border-game-border overflow-hidden flex flex-col">
+        <aside className="w-full md:w-80 lg:w-96 p-4 shrink-0 bg-game-dark z-10 border-b md:border-b-0 md:border-r border-game-border md:overflow-hidden flex flex-col">
           <ConfigPanel 
             arts={arts}
             setArts={setArts}
@@ -183,28 +183,28 @@ const App: React.FC = () => {
         </aside>
 
         {/* Right: Results & Visualization */}
-        <main className="flex-1 p-4 flex flex-col gap-4 overflow-hidden relative bg-game-dark">
+        <main className="flex-1 p-4 flex flex-col gap-4 md:overflow-auto relative bg-game-dark custom-scrollbar">
           
           {/* Stats Bar */}
-          <div className="bg-game-panel rounded-lg p-4 shadow-sm flex flex-wrap gap-x-8 gap-y-4 items-center border border-game-border shrink-0">
+          <div className="bg-game-panel rounded-lg p-4 shadow-sm flex flex-wrap gap-x-8 gap-y-4 items-center border border-game-border shrink-0 justify-between sm:justify-start">
              <div>
-               <div className="text-xs text-game-muted">预计总真元</div>
-               <div className="text-2xl font-bold text-game-highlight font-mono">
+               <div className="text-[10px] sm:text-xs text-game-muted">预计总真元</div>
+               <div className="text-xl sm:text-2xl font-bold text-game-highlight font-mono">
                  {result ? result.totalZhenyuan.toLocaleString() : '---'}
                </div>
              </div>
              <div>
-               <div className="text-xs text-game-muted">预计总时间</div>
-               <div className="text-2xl font-bold text-game-text font-mono">
-                 {result ? `${result.totalTimeHours.toFixed(1)} 小时` : '---'}
+               <div className="text-[10px] sm:text-xs text-game-muted">预计总时间</div>
+               <div className="text-xl sm:text-2xl font-bold text-game-text font-mono">
+                 {result ? `${result.totalTimeHours.toFixed(1)}h` : '---'}
                </div>
              </div>
              
-             <div className="w-px h-10 bg-game-border mx-2 hidden md:block"></div>
+             <div className="hidden sm:block w-px h-10 bg-game-border mx-2"></div>
 
              <div>
-               <div className="text-xs text-game-muted">综合效率 (真元/小时)</div>
-               <div className="text-2xl font-bold text-game-success font-mono">
+               <div className="text-[10px] sm:text-xs text-game-muted">综合效率</div>
+               <div className="text-xl sm:text-2xl font-bold text-game-success font-mono">
                  {result ? Math.round(globalEfficiency).toLocaleString() : '---'}
                </div>
              </div>
@@ -214,7 +214,7 @@ const App: React.FC = () => {
           {result && <ResultSummary result={result} userArts={arts} />}
 
           {/* Table Container */}
-          <div className="flex-1 min-h-0 shadow-lg rounded-lg border border-game-border overflow-hidden">
+          <div className="flex-1 min-h-[400px] md:min-h-0 shadow-lg rounded-lg border border-game-border overflow-hidden bg-game-panel">
             <ZhenyuanTable 
               speed={speed} 
               reduction={reduction} 
