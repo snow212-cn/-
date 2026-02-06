@@ -19,11 +19,14 @@ export interface MartialArtConfig {
   count: number; // How many arts of this type
 }
 
+export type AlgorithmStrategy = 'dp' | 'greedy';
+
 export interface OptimizationResult {
   totalZhenyuan: number;
   totalTimeHours: number;
   arts: Record<string, number>; // Maps ID to Optimal Level
   path: OptimizationStep[];
+  strategy?: AlgorithmStrategy;
 }
 
 export interface OptimizationStep {

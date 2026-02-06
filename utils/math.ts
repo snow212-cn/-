@@ -63,6 +63,150 @@ export const getStepCost = (
   return breakTime + cultTime;
 };
 
+// --- GREEDY OPTIMIZATION (Stepping by marginal gain with lookahead) ---
+export const optimizeGreedy = (
+    instances: { id: string; difficulty: number; isMain: boolean; uniqueId: string; originalIndex: number }[],
+    settings: {
+        speed: number;
+        reduction: number;
+        targetType: 'zhenyuan' | 'time' | 'level';
+        targetValue: number;
+    }
+) => {
+    let currentTotalZ = 0;
+    let currentTotalT = 0;
+    const finalArts: Record<string, number> = {};
+    const path: any[] = [];
+
+    // Initialize
+    instances.forEach(inst => {
+        const startZ = getZhenyuan(99, inst.difficulty, inst.isMain);
+        currentTotalZ += startZ;
+        finalArts[inst.uniqueId] = 99;
+    });
+
+    const maxLevelLimit = 499;
+
+    while (true) {
+        let bestInstIdx = -1;
+        let bestEff = -1;
+        let bestStepInfo = null;
+
+        for (let i = 0; i < instances.length; i++) {
+            const inst = instances[i];
+            const curLvl = finalArts[inst.uniqueId];
+            
+            if (curLvl >= maxLevelLimit) continue;
+
+            // Lookahead Strategy:
+            // Calculate max potential efficiency up to level 399 (or max limit)
+            // This prevents getting stuck in local optima due to high initial breakthrough costs (low levels)
+            // or step-based fluctuations.
+            
+            let maxPotentialEff = -1;
+            let targetForMaxEff = -1;
+            let deltaZForMaxEff = 0;
+            let stepTForMaxEff = 0;
+
+            // We simulate going from curLvl -> targetL
+            let tempAccumZ = 0; // Cumulative Gain
+            let tempAccumT = 0; // Cumulative Cost
+            let currentSimLvl = curLvl;
+
+            // Scan range: Look ahead up to 20 steps (200 levels) or until limit
+            // We cap at 399 because that's where mechanics often shift, but scanning to 499 is also fine.
+            const scanLimit = Math.min(maxLevelLimit, curLvl + 200); 
+
+            for (let l = curLvl; l < scanLimit; l += 10) {
+                 const stepCost = getStepCost(l, inst.difficulty, settings.speed, settings.reduction);
+                 const zCurrent = getZhenyuan(l, inst.difficulty, inst.isMain);
+                 const zNext = getZhenyuan(l + 10, inst.difficulty, inst.isMain);
+                 const gain = zNext - zCurrent;
+
+                 tempAccumZ += gain;
+                 tempAccumT += stepCost;
+                 currentSimLvl = l + 10;
+
+                 const potentialEff = tempAccumZ / tempAccumT;
+                 
+                 if (potentialEff > maxPotentialEff) {
+                     maxPotentialEff = potentialEff;
+                     targetForMaxEff = currentSimLvl;
+                     deltaZForMaxEff = tempAccumZ;
+                     stepTForMaxEff = tempAccumT;
+                 }
+            }
+
+            // Decision Metric: Use maxPotentialEff to decide WHICH art to upgrade
+            // But we only execute ONE STEP (10 levels) to maintain granular control,
+            // unless we are in a "catch up" phase? 
+            // Actually, if we use potential efficiency to decide, we should probably stick to small steps
+            // because once we take a step, the potential efficiency of this art might change (usually increase then decrease).
+            // However, to be "fair", we should compare the "potential" of A vs "potential" of B.
+            
+            // To properly execute the "Next Step", we need the data for just the next 10 levels
+            // even if we chose based on potential.
+            // ...Wait, if we choose based on potential 99->299, but only execute 99->109,
+            // the efficiency of 99->109 might be terrible.
+            // But that's okay! We are investing.
+            
+            // Recalculate immediate step data for the actual execution
+            const immediateStepT = getStepCost(curLvl, inst.difficulty, settings.speed, settings.reduction);
+            const immediateZCurr = getZhenyuan(curLvl, inst.difficulty, inst.isMain);
+            const immediateZNext = getZhenyuan(curLvl + 10, inst.difficulty, inst.isMain);
+            const immediateDeltaZ = immediateZNext - immediateZCurr;
+            
+            // The comparison key is maxPotentialEff
+            if (maxPotentialEff > bestEff) {
+                bestEff = maxPotentialEff;
+                bestInstIdx = i;
+                // We execute the immediate step, but we made the decision based on potential
+                bestStepInfo = { 
+                    deltaZ: immediateDeltaZ, 
+                    stepT: immediateStepT, 
+                    nextLvl: curLvl + 10,
+                    // Store the potential efficiency for display/debug if needed, 
+                    // though UI expects immediate efficiency. 
+                    // Let's store immediate efficiency in the path for correctness of history,
+                    // or maybe the decision efficiency? Users might be confused if they see low efficiency chosen.
+                    // Let's store immediate.
+                    eff: immediateDeltaZ / immediateStepT 
+                };
+            }
+        }
+
+        if (bestInstIdx === -1) break; // No more upgrades possible
+
+        const inst = instances[bestInstIdx];
+        
+        // Stop condition
+        if (settings.targetType === 'zhenyuan' && currentTotalZ >= settings.targetValue) break;
+        if (settings.targetType === 'time' && currentTotalT + bestStepInfo!.stepT > settings.targetValue) break;
+
+        // Apply upgrade
+        currentTotalZ += bestStepInfo!.deltaZ;
+        currentTotalT += bestStepInfo!.stepT;
+        finalArts[inst.uniqueId] = bestStepInfo!.nextLvl;
+        
+        path.push({
+            artId: inst.uniqueId,
+            fromLevel: bestStepInfo!.nextLvl - 10,
+            toLevel: bestStepInfo!.nextLvl,
+            costTime: bestStepInfo!.stepT,
+            gainZhenyuan: bestStepInfo!.deltaZ,
+            efficiency: bestStepInfo!.eff // Recorded efficiency is the immediate one
+        });
+    }
+
+    return {
+        totalZhenyuan: currentTotalZ,
+        totalTimeHours: currentTotalT,
+        arts: finalArts,
+        path: path,
+        strategy: 'greedy' as const
+    };
+};
+
 // Global Optimization using DP / Pareto Frontier or Reference Level
 export const optimize = (
   arts: { id: string; difficulty: number; isMain: boolean; count: number }[],
@@ -72,10 +216,11 @@ export const optimize = (
     targetType: 'zhenyuan' | 'time' | 'level';
     targetValue: number;
     referenceArtId?: string;
+    strategy?: 'dp' | 'greedy';
   }
 ) => {
   // 1. Flatten instances (handle 'count')
-  const instances = [];
+  const instances: { id: string; difficulty: number; isMain: boolean; uniqueId: string; originalIndex: number }[] = [];
   arts.forEach((art, idx) => {
     for(let i=0; i<art.count; i++) {
       instances.push({ ...art, uniqueId: `${art.id}_${i}`, originalIndex: idx });
@@ -84,6 +229,11 @@ export const optimize = (
 
   if (instances.length === 0) {
     return { totalZhenyuan: 0, totalTimeHours: 0, arts: {}, path: [] };
+  }
+
+  // Use Greedy if requested or for certain conditions
+  if (settings.strategy === 'greedy' && settings.targetType !== 'level') {
+      return optimizeGreedy(instances, settings);
   }
 
   // --- MODE: REFERENCE LEVEL ---

@@ -55,6 +55,11 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved).referenceArtId : undefined;
   });
 
+  const [strategy, setStrategy] = useState<'dp' | 'greedy'>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved).strategy || 'greedy' : 'greedy';
+  });
+
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   
@@ -69,10 +74,11 @@ const App: React.FC = () => {
       reduction,
       targetType,
       targetValue,
-      referenceArtId
+      referenceArtId,
+      strategy
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-  }, [arts, speed, reduction, targetType, targetValue, referenceArtId]);
+  }, [arts, speed, reduction, targetType, targetValue, referenceArtId, strategy]);
 
   // Apply Theme
   useEffect(() => {
@@ -111,12 +117,13 @@ const App: React.FC = () => {
         reduction,
         targetType,
         targetValue,
-        referenceArtId
+        referenceArtId,
+        strategy
       });
       setResult(res);
       setIsCalculating(false);
     }, 100);
-  }, [arts, speed, reduction, targetType, targetValue, referenceArtId]);
+  }, [arts, speed, reduction, targetType, targetValue, referenceArtId, strategy]);
 
   // Derived Stats
   const globalEfficiency = useMemo(() => {
@@ -168,6 +175,8 @@ const App: React.FC = () => {
             setTargetValue={setTargetValue}
             referenceArtId={referenceArtId}
             setReferenceArtId={setReferenceArtId}
+            strategy={strategy}
+            setStrategy={setStrategy}
             onCalculate={handleCalculate}
             isCalculating={isCalculating}
           />

@@ -14,6 +14,8 @@ interface ConfigPanelProps {
   setTargetValue: (val: number) => void;
   referenceArtId: string | undefined;
   setReferenceArtId: (val: string) => void;
+  strategy: 'dp' | 'greedy';
+  setStrategy: (val: 'dp' | 'greedy') => void;
   onCalculate: () => void;
   isCalculating: boolean;
 }
@@ -31,6 +33,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   setTargetValue,
   referenceArtId,
   setReferenceArtId,
+  strategy,
+  setStrategy,
   onCalculate,
   isCalculating
 }) => {
@@ -96,6 +100,29 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono transition-colors"
             />
           </div>
+        </div>
+
+        <hr className="border-game-border mb-6" />
+
+        {/* Optimization Strategy */}
+        <div className="mb-6">
+           <label className="block text-sm text-game-muted mb-2">优化策略</label>
+           <div className="flex bg-game-dark rounded p-1 border border-game-border">
+             <button
+                className={`flex-1 py-1.5 rounded text-xs transition-all ${strategy === 'greedy' ? 'bg-game-success/20 text-game-success border border-game-success/50' : 'text-game-muted hover:text-game-text'}`}
+                onClick={() => setStrategy('greedy')}
+                title="贪心算法：每次选择当前效率最高的升级项，方案更均衡且容易达到全局最优性价比。"
+             >
+               均衡 (推荐)
+             </button>
+             <button
+                className={`flex-1 py-1.5 rounded text-xs transition-all ${strategy === 'dp' ? 'bg-game-accent/20 text-game-accent border border-game-accent/50' : 'text-game-muted hover:text-game-text'}`}
+                onClick={() => setStrategy('dp')}
+                title="DP算法：尝试寻找固定真元下的理论最短时间，可能产生极端等级分配。"
+             >
+               极限 (DP)
+             </button>
+           </div>
         </div>
 
         <hr className="border-game-border mb-6" />
@@ -278,7 +305,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               正在计算...
             </>
           ) : (
-            '🚀 计算最优方案'
+            '🚀 计算'
           )}
         </button>
       </div>
