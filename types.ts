@@ -17,6 +17,8 @@ export interface MartialArtConfig {
   isMain: boolean;
   targetLevel: number; // The calculated optimal level
   count: number; // How many arts of this type
+  isLocked?: boolean;
+  lockedLevel?: number;
 }
 
 export type AlgorithmStrategy = 'dp' | 'greedy';

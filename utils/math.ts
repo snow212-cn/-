@@ -138,17 +138,7 @@ export const optimizeGreedy = (
             }
 
             // Decision Metric: Use maxPotentialEff to decide WHICH art to upgrade
-            // But we only execute ONE STEP (10 levels) to maintain granular control,
-            // unless we are in a "catch up" phase? 
-            // Actually, if we use potential efficiency to decide, we should probably stick to small steps
-            // because once we take a step, the potential efficiency of this art might change (usually increase then decrease).
-            // However, to be "fair", we should compare the "potential" of A vs "potential" of B.
-            
-            // To properly execute the "Next Step", we need the data for just the next 10 levels
-            // even if we chose based on potential.
-            // ...Wait, if we choose based on potential 99->299, but only execute 99->109,
-            // the efficiency of 99->109 might be terrible.
-            // But that's okay! We are investing.
+            // But we only execute ONE STEP (10 levels) to maintain granular control.
             
             // Recalculate immediate step data for the actual execution
             const immediateStepT = getStepCost(curLvl, inst.difficulty, settings.speed, settings.reduction);
@@ -165,11 +155,6 @@ export const optimizeGreedy = (
                     deltaZ: immediateDeltaZ, 
                     stepT: immediateStepT, 
                     nextLvl: curLvl + 10,
-                    // Store the potential efficiency for display/debug if needed, 
-                    // though UI expects immediate efficiency. 
-                    // Let's store immediate efficiency in the path for correctness of history,
-                    // or maybe the decision efficiency? Users might be confused if they see low efficiency chosen.
-                    // Let's store immediate.
                     eff: immediateDeltaZ / immediateStepT 
                 };
             }
@@ -209,7 +194,7 @@ export const optimizeGreedy = (
 
 // Global Optimization using DP / Pareto Frontier or Reference Level
 export const optimize = (
-  arts: { id: string; difficulty: number; isMain: boolean; count: number }[],
+  arts: { id: string; difficulty: number; isMain: boolean; count: number; isLocked?: boolean; lockedLevel?: number }[],
   settings: {
     speed: number;
     reduction: number;
@@ -221,19 +206,69 @@ export const optimize = (
 ) => {
   // 1. Flatten instances (handle 'count')
   const instances: { id: string; difficulty: number; isMain: boolean; uniqueId: string; originalIndex: number }[] = [];
+  const lockedInstances: { id: string; difficulty: number; isMain: boolean; uniqueId: string; originalIndex: number; lockedLevel: number }[] = [];
+
   arts.forEach((art, idx) => {
     for(let i=0; i<art.count; i++) {
-      instances.push({ ...art, uniqueId: `${art.id}_${i}`, originalIndex: idx });
+        const uniqueId = `${art.id}_${i}`;
+        if (art.isLocked && art.lockedLevel) {
+            lockedInstances.push({ ...art, uniqueId, originalIndex: idx, lockedLevel: art.lockedLevel });
+        } else {
+            instances.push({ ...art, uniqueId, originalIndex: idx });
+        }
     }
   });
 
+  // Calculate Fixed Costs/Gains from Locked Arts
+  let lockedZ = 0;
+  let lockedT = 0;
+  const finalArts: Record<string, number> = {};
+
+  lockedInstances.forEach(inst => {
+      // Calculate Time to reach lockedLevel from 99
+      for (let l = 99; l < inst.lockedLevel; l += 10) {
+           lockedT += getStepCost(l, inst.difficulty, settings.speed, settings.reduction);
+      }
+      
+      // Calculate Total Z at lockedLevel
+      lockedZ += getZhenyuan(inst.lockedLevel, inst.difficulty, inst.isMain);
+      
+      finalArts[inst.uniqueId] = inst.lockedLevel;
+  });
+
+  // If no unlocked instances, just return locked results
   if (instances.length === 0) {
-    return { totalZhenyuan: 0, totalTimeHours: 0, arts: {}, path: [] };
+      return { totalZhenyuan: lockedZ, totalTimeHours: lockedT, arts: finalArts, path: [] };
   }
+  
+  // Adjust Settings for Optimization
+  let adjustedTargetValue = settings.targetValue;
+  
+  if (settings.targetType === 'zhenyuan') {
+      adjustedTargetValue = Math.max(0, settings.targetValue - lockedZ); 
+  } else if (settings.targetType === 'time') {
+      adjustedTargetValue = Math.max(0, settings.targetValue - lockedT);
+  }
+  
+  const adjustedSettings = { ...settings, targetValue: adjustedTargetValue };
+
+  // Helper to merge results
+  const mergeResult = (res: any) => {
+      if (!res) return null;
+      return {
+          totalZhenyuan: res.totalZhenyuan + lockedZ, // Note: res.totalZhenyuan includes base Z of unlocked arts
+          totalTimeHours: res.totalTimeHours + lockedT,
+          arts: { ...finalArts, ...res.arts },
+          path: res.path,
+          strategy: res.strategy
+      };
+  };
+
+  // --- STRATEGY DISPATCH ---
 
   // Use Greedy if requested or for certain conditions
   if (settings.strategy === 'greedy' && settings.targetType !== 'level') {
-      return optimizeGreedy(instances, settings);
+      return mergeResult(optimizeGreedy(instances, adjustedSettings));
   }
 
   // --- MODE: REFERENCE LEVEL ---
@@ -258,7 +293,7 @@ export const optimize = (
          }
      }
 
-     const finalArts: Record<string, number> = {};
+     const levelFinalArts: Record<string, number> = {};
      let totalZ = 0;
      let totalT = 0;
      
@@ -301,13 +336,13 @@ export const optimize = (
                  break;
              }
          }
-         finalArts[inst.uniqueId] = currentLvl;
+         levelFinalArts[inst.uniqueId] = currentLvl;
      });
 
      return {
-        totalZhenyuan: totalZ,
-        totalTimeHours: totalT,
-        arts: finalArts,
+        totalZhenyuan: totalZ + lockedZ,
+        totalTimeHours: totalT + lockedT,
+        arts: { ...finalArts, ...levelFinalArts },
         path: []
      };
   }
@@ -392,7 +427,7 @@ export const optimize = (
 
   if (settings.targetType === 'zhenyuan') {
     for (const state of frontier) {
-        if (state.z + baseTotalZ >= settings.targetValue) {
+        if (state.z + baseTotalZ >= adjustedTargetValue) {
             bestState = state; 
         } else {
             break; 
@@ -403,7 +438,7 @@ export const optimize = (
   } else {
     // Target Time
     for (const state of frontier) {
-        if (state.t <= settings.targetValue) {
+        if (state.t <= adjustedTargetValue) {
             bestState = state;
             break;
         }
@@ -413,15 +448,15 @@ export const optimize = (
 
   if (!bestState) return null;
 
-  const finalArts: Record<string, number> = {};
+  const dpFinalArts: Record<string, number> = {};
   instances.forEach((inst, idx) => {
-      finalArts[inst.uniqueId] = bestState!.choices[idx];
+      dpFinalArts[inst.uniqueId] = bestState!.choices[idx];
   });
 
   return {
-    totalZhenyuan: bestState.z + baseTotalZ,
-    totalTimeHours: bestState.t,
-    arts: finalArts, 
+    totalZhenyuan: bestState.z + baseTotalZ + lockedZ,
+    totalTimeHours: bestState.t + lockedT,
+    arts: { ...finalArts, ...dpFinalArts }, 
     path: []
   };
 };
