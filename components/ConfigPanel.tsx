@@ -67,6 +67,33 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
       }
   }, [targetType, arts, referenceArtId, setReferenceArtId]);
 
+  const [showArtList, setShowArtList] = React.useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth >= 768;
+  });
+  const [artFilter, setArtFilter] = React.useState<'all' | 'main' | 'sub' | 'locked'>('all');
+
+  const artStats = React.useMemo(() => {
+    const main = arts.filter((art) => art.isMain).length;
+    const sub = arts.length - main;
+    const locked = arts.filter((art) => art.isLocked).length;
+    return { total: arts.length, main, sub, locked };
+  }, [arts]);
+
+  const filteredArts = React.useMemo(() => {
+    switch (artFilter) {
+      case 'main':
+        return arts.filter((art) => art.isMain);
+      case 'sub':
+        return arts.filter((art) => !art.isMain);
+      case 'locked':
+        return arts.filter((art) => art.isLocked);
+      default:
+        return arts;
+    }
+  }, [arts, artFilter]);
+
+
   return (
     <div className="bg-game-panel p-4 rounded-lg shadow-sm flex flex-col gap-6 md:h-full md:overflow-y-auto custom-scrollbar">
       <div>
@@ -201,109 +228,152 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
       {/* Martial Arts List */}
       <div className="flex-1">
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-3 gap-2">
            <h3 className="text-lg font-semibold text-game-success flex items-center gap-2">
              <span>📚</span> 武学列表
            </h3>
-           <button onClick={addArt} className="text-xs bg-game-accent hover:opacity-80 text-white px-4 py-2 rounded transition-colors font-bold shadow-sm">
-             + 添加
-           </button>
+           <div className="flex items-center gap-2">
+             <button
+               onClick={() => setShowArtList((v) => !v)}
+               className="text-xs bg-game-panel border border-game-border hover:border-game-accent text-game-text px-3 py-2 rounded transition-colors font-bold"
+             >
+               {showArtList ? '收起' : '展开'}
+             </button>
+             <button onClick={addArt} className="text-xs bg-game-accent hover:opacity-80 text-white px-4 py-2 rounded transition-colors font-bold shadow-sm">
+               + 添加
+             </button>
+           </div>
         </div>
-        
-        <div className="space-y-3">
-          {arts.map((art) => (
-            <div
-                key={art.id}
-                className={`bg-game-dark p-3 rounded border flex flex-col gap-3 relative group transition-all ${
-                    targetType === 'level' && referenceArtId === art.id
-                    ? 'border-game-accent ring-1 ring-game-accent shadow-[0_0_10px_rgba(59,130,246,0.1)]'
-                    : 'border-game-border'
-                }`}
-            >
-               {/* Row 1: Difficulty, Count, Close */}
-               <div className="flex items-end gap-2">
-                 <div className="flex-1">
-                   <label className="text-[10px] uppercase tracking-wider block text-game-muted mb-1">难度</label>
-                   <select
-                    value={art.difficulty}
-                    onChange={(e) => updateArt(art.id, 'difficulty', Number(e.target.value))}
-                    className="w-full bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
-                   >
-                     {[1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map(d => (
-                       <option key={d} value={d}>{d.toFixed(1)}</option>
-                     ))}
-                   </select>
-                 </div>
-                 
-                 <div className="flex-1">
-                   <label className="text-[10px] uppercase tracking-wider block text-game-muted mb-1">数量</label>
-                   <input
-                     type="number"
-                     min={1}
-                     value={art.count}
-                     onChange={(e) => updateArt(art.id, 'count', Number(e.target.value))}
-                     className="w-full bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
-                   />
-                 </div>
 
-                 <button
-                  onClick={() => removeArt(art.id)}
-                  className="text-game-muted hover:text-game-danger p-2 h-[34px] flex items-center justify-center rounded hover:bg-game-panel transition-colors"
-                  title="删除"
-                 >
-                   ✕
-                 </button>
-               </div>
+        {showArtList && (
+          <>
+            <div className="grid grid-cols-4 bg-game-dark rounded p-1 border border-game-border mb-3 text-xs">
+              <button
+                className={`py-1.5 rounded transition-colors ${artFilter === 'all' ? 'bg-game-accent text-white' : 'text-game-muted hover:text-game-text'}`}
+                onClick={() => setArtFilter('all')}
+              >
+                全部({artStats.total})
+              </button>
+              <button
+                className={`py-1.5 rounded transition-colors ${artFilter === 'main' ? 'bg-game-warning/20 text-game-warning border border-game-warning/50' : 'text-game-muted hover:text-game-text'}`}
+                onClick={() => setArtFilter('main')}
+              >
+                主武({artStats.main})
+              </button>
+              <button
+                className={`py-1.5 rounded transition-colors ${artFilter === 'sub' ? 'bg-game-panel text-game-text border border-game-border' : 'text-game-muted hover:text-game-text'}`}
+                onClick={() => setArtFilter('sub')}
+              >
+                副武({artStats.sub})
+              </button>
+              <button
+                className={`py-1.5 rounded transition-colors ${artFilter === 'locked' ? 'bg-game-success/20 text-game-success border border-game-success/50' : 'text-game-muted hover:text-game-text'}`}
+                onClick={() => setArtFilter('locked')}
+              >
+                锁定({artStats.locked})
+              </button>
+            </div>
 
-               {/* Row 2: Main/Sub, Lock, Target Level */}
-               <div className="flex items-center gap-2 mt-1">
-                 <label className={`text-xs cursor-pointer flex items-center gap-1.5 px-2 py-1.5 rounded border transition-colors select-none ${art.isMain ? 'bg-game-warning/10 border-game-warning text-game-warning' : 'bg-game-panel border-game-border text-game-muted'}`}>
-                   <input
-                    type="checkbox"
-                    checked={art.isMain}
-                    onChange={(e) => updateArt(art.id, 'isMain', e.target.checked)}
-                    className="hidden"
-                   />
-                   <span className="font-bold whitespace-nowrap">
-                     {art.isMain ? "★ 主武学" : "☆ 副武学"}
-                   </span>
-                 </label>
+            <div className="space-y-3 max-h-[52vh] md:max-h-none overflow-y-auto pr-1 custom-scrollbar">
+              {filteredArts.map((art) => (
+                <div
+                    key={art.id}
+                    className={`bg-game-dark p-3 rounded border flex flex-col gap-3 relative group transition-all ${
+                        targetType === 'level' && referenceArtId === art.id
+                        ? 'border-game-accent ring-1 ring-game-accent shadow-[0_0_10px_rgba(59,130,246,0.1)]'
+                        : 'border-game-border'
+                    }`}
+                >
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] uppercase tracking-wider block text-game-muted mb-1">难度</label>
+                      <select
+                        value={art.difficulty}
+                        onChange={(e) => updateArt(art.id, 'difficulty', Number(e.target.value))}
+                        className="w-full bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
+                      >
+                        {[1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map(d => (
+                          <option key={d} value={d}>{d.toFixed(1)}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                 <div className="flex items-center gap-1 flex-1">
+                    <div className="flex-1">
+                      <label className="text-[10px] uppercase tracking-wider block text-game-muted mb-1">数量</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={art.count}
+                        onChange={(e) => updateArt(art.id, 'count', Number(e.target.value))}
+                        className="w-full bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
+                      />
+                    </div>
+
                     <button
+                      onClick={() => removeArt(art.id)}
+                      className="text-game-muted hover:text-game-danger p-2 h-[34px] flex items-center justify-center rounded hover:bg-game-panel transition-colors"
+                      title="删除"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-1">
+                    <label className={`text-xs cursor-pointer flex items-center gap-1.5 px-2 py-1.5 rounded border transition-colors select-none ${art.isMain ? 'bg-game-warning/10 border-game-warning text-game-warning' : 'bg-game-panel border-game-border text-game-muted'}`}>
+                      <input
+                        type="checkbox"
+                        checked={art.isMain}
+                        onChange={(e) => updateArt(art.id, 'isMain', e.target.checked)}
+                        className="hidden"
+                      />
+                      <span className="font-bold whitespace-nowrap">
+                        {art.isMain ? "★ 主武学" : "☆ 副武学"}
+                      </span>
+                    </label>
+
+                    <div className="flex items-center gap-1 flex-1">
+                      <button
                         onClick={() => updateArt(art.id, 'isLocked', !art.isLocked)}
                         className={`px-2 py-1.5 rounded border transition-colors text-xs font-bold whitespace-nowrap ${art.isLocked ? 'bg-game-accent text-white border-game-accent' : 'bg-game-panel text-game-muted border-game-border hover:text-game-text'}`}
                         title={art.isLocked ? "点击解锁" : "点击锁定等级"}
-                    >
+                      >
                         {art.isLocked ? '🔒 ' : '🔓 '}
-                    </button>
-                    
-                    {art.isLocked && (
-                        <input
-                            type="number"
-                            min={99}
-                            max={599}
-                            step={10}
-                            value={art.lockedLevel || 99}
-                            onChange={(e) => updateArt(art.id, 'lockedLevel', Number(e.target.value))}
-                            className="w-20 bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
-                            placeholder="等级"
-                        />
-                    )}
+                      </button>
 
-                    {targetType === 'level' && referenceArtId !== art.id && !art.isLocked && (
+                      {art.isLocked && (
+                        <input
+                          type="number"
+                          min={99}
+                          max={599}
+                          step={10}
+                          value={art.lockedLevel || 99}
+                          onChange={(e) => updateArt(art.id, 'lockedLevel', Number(e.target.value))}
+                          className="w-20 bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
+                          placeholder="等级"
+                        />
+                      )}
+
+                      {targetType === 'level' && referenceArtId !== art.id && !art.isLocked && (
                         <button
-                            onClick={() => setReferenceArtId(art.id)}
-                            className="text-xs text-game-accent underline hover:text-white ml-auto px-2 whitespace-nowrap"
+                          onClick={() => setReferenceArtId(art.id)}
+                          className="text-xs text-game-accent underline hover:text-white ml-auto px-2 whitespace-nowrap"
                         >
-                            设为基准
+                          设为基准
                         </button>
-                    )}
-                 </div>
-               </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {filteredArts.length === 0 && (
+                <div className="text-xs text-game-muted italic text-center py-4 bg-game-dark border border-game-border rounded">
+                  当前筛选下没有武学
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
 
       <div className="pt-6 sticky bottom-0 bg-game-panel border-t border-game-border z-10 -mx-4 px-4 pb-2 md:pb-0">

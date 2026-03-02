@@ -19,9 +19,12 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
   // Generate all possible levels and difficulties first
   const allLevels = useMemo(() => {
     const l = [];
-    for (let i = 99; i <= 489; i += 10) l.push(i);
+    for (let i = 99; i <= 589; i += 10) l.push(i);
     return l;
   }, []);
+
+  const minLevelOptions = useMemo(() => allLevels.filter((l) => l <= 489), [allLevels]);
+  const maxLevelOptions = useMemo(() => allLevels.filter((l) => l >= 199), [allLevels]);
   
   const allDifficulties = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
 
@@ -116,7 +119,7 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                     }}
                     className="bg-game-dark border border-gray-600 rounded px-1 py-0.5 text-white outline-none focus:border-game-accent"
                 >
-                    {allLevels.map(l => <option key={l} value={l}>{l}</option>)}
+                    {minLevelOptions.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
                 <span className="text-gray-500">-</span>
                 <select 
@@ -128,7 +131,7 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                     }}
                     className="bg-game-dark border border-gray-600 rounded px-1 py-0.5 text-white outline-none focus:border-game-accent"
                 >
-                    {allLevels.map(l => <option key={l} value={l}>{l}</option>)}
+                    {maxLevelOptions.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
             </div>
 
