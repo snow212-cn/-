@@ -67,10 +67,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
       }
   }, [targetType, arts, referenceArtId, setReferenceArtId]);
 
-  const [showArtList, setShowArtList] = React.useState(() => {
-    if (typeof window === 'undefined') return true;
-    return window.innerWidth >= 768;
-  });
+  const [showArtList, setShowArtList] = React.useState(true);
   const [artFilter, setArtFilter] = React.useState<'all' | 'main' | 'sub' | 'locked'>('all');
 
   const artStats = React.useMemo(() => {
