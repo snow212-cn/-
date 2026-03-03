@@ -41,6 +41,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
   const addArt = () => {
     const newId = Math.random().toString(36).substr(2, 9);
+    setShowArtList(true);
+    setLastAddedArtId(newId);
     setArts([...arts, { id: newId, difficulty: 1.2, isMain: false, targetLevel: 99, count: 1, isLocked: false, lockedLevel: 99 }]);
   };
 
@@ -69,6 +71,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
   const [showArtList, setShowArtList] = React.useState(true);
   const [artFilter, setArtFilter] = React.useState<'all' | 'main' | 'sub' | 'locked'>('all');
+  const artListRef = React.useRef<HTMLDivElement | null>(null);
+  const [lastAddedArtId, setLastAddedArtId] = React.useState<string | null>(null);
 
   const artStats = React.useMemo(() => {
     const main = arts.filter((art) => art.isMain).length;
@@ -90,6 +94,32 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
     }
   }, [arts, artFilter]);
 
+  React.useEffect(() => {
+    if (!lastAddedArtId) return;
+    if (!showArtList) return;
+
+    // 如果当前筛选看不到新条目，则不进行滚动，避免滚动到“无意义”的位置
+    if (!filteredArts.some((a) => a.id === lastAddedArtId)) {
+      setLastAddedArtId(null);
+      return;
+    }
+
+    const raf = requestAnimationFrame(() => {
+      const container = artListRef.current;
+      if (!container) return;
+
+      const el = container.querySelector(`[data-art-id="${lastAddedArtId}"]`) as HTMLElement | null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      }
+
+      setLastAddedArtId(null);
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [filteredArts, lastAddedArtId, showArtList]);
 
   return (
     <div className="bg-game-panel p-4 rounded-lg shadow-sm flex flex-col gap-6 md:h-full md:overflow-y-auto custom-scrollbar">
@@ -176,35 +206,35 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
            </div>
            
            {targetType === 'level' ? (
-              <div className="space-y-3 p-3 bg-gray-800/30 rounded border border-gray-700/50">
-                  <div>
-                      <label className="block text-xs text-game-muted mb-1">基准武学</label>
-                      <select 
-                        value={referenceArtId || ''}
-                        onChange={(e) => setReferenceArtId(e.target.value)}
-                        className="w-full bg-game-dark border border-game-border rounded px-2 py-2 text-game-text text-sm focus:border-game-accent outline-none"
-                      >
-                          {arts.map((art) => (
-                              <option key={art.id} value={art.id}>
-                                  {art.isMain ? '★' : '☆'} 难度 {art.difficulty.toFixed(1)} (x{art.count})
-                              </option>
-                          ))}
-                      </select>
-                  </div>
-                  <div>
-                      <label className="block text-xs text-game-muted mb-1">目标等级</label>
-                      <input 
-                        type="number"
-                        min={99}
-                        max={599}
-                        step={10} 
-                        value={targetValue}
-                        onChange={(e) => setTargetValue(Number(e.target.value))}
-                        className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono text-lg transition-colors"
-                      />
-                  </div>
-              </div>
-           ) : (
+               <div className="space-y-3 p-3 bg-game-panel rounded border border-game-border">
+                   <div>
+                       <label className="block text-xs text-game-muted mb-1">基准武学</label>
+                       <select
+                         value={referenceArtId || ''}
+                         onChange={(e) => setReferenceArtId(e.target.value)}
+                         className="w-full bg-game-dark border border-game-border rounded px-2 py-2 text-game-text text-sm focus:border-game-accent outline-none"
+                       >
+                           {arts.map((art) => (
+                               <option key={art.id} value={art.id}>
+                                   {art.isMain ? '★' : '☆'} 难度 {art.difficulty.toFixed(1)} (x{art.count})
+                               </option>
+                           ))}
+                       </select>
+                   </div>
+                   <div>
+                       <label className="block text-xs text-game-muted mb-1">目标等级</label>
+                       <input
+                         type="number"
+                         min={99}
+                         max={599}
+                         step={10}
+                         value={targetValue}
+                         onChange={(e) => setTargetValue(Number(e.target.value))}
+                         className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono text-lg transition-colors"
+                       />
+                   </div>
+               </div>
+            ) : (
               <div>
                 <label className="block text-sm text-game-muted mb-1">
                   {targetType === 'zhenyuan' ? '预期总真元' : '预期总时间 (小时)'}
@@ -271,10 +301,11 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               </button>
             </div>
 
-            <div className="space-y-3 max-h-[52vh] md:max-h-none overflow-y-auto pr-1 custom-scrollbar">
+            <div ref={artListRef} className="space-y-3 max-h-[52vh] md:max-h-none overflow-y-auto pr-1 custom-scrollbar">
               {filteredArts.map((art) => (
                 <div
                     key={art.id}
+                    data-art-id={art.id}
                     className={`bg-game-dark p-3 rounded border flex flex-col gap-3 relative group transition-all ${
                         targetType === 'level' && referenceArtId === art.id
                         ? 'border-game-accent ring-1 ring-game-accent shadow-[0_0_10px_rgba(59,130,246,0.1)]'

@@ -88,14 +88,14 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
   };
 
   return (
-    <div className="bg-game-panel rounded-lg shadow-lg overflow-hidden flex flex-col h-full border border-gray-700 min-h-[400px]">
+    <div className="bg-game-panel rounded-lg shadow-lg overflow-hidden flex flex-col h-full border border-game-border min-h-[400px]">
       {/* Header & Controls */}
-      <div className="p-3 border-b border-gray-700 bg-game-dark flex flex-col gap-3">
+      <div className="p-3 border-b border-game-border bg-game-dark flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
               <h2 className="text-lg font-bold text-game-highlight flex items-center gap-2">
-                 📊 效率热力图 
-                 <span className="hidden sm:inline text-xs font-normal text-gray-500 bg-gray-800 px-2 py-0.5 rounded border border-gray-700">
+                 📊 效率热力图
+                 <span className="hidden sm:inline text-xs font-normal text-game-muted bg-game-panel px-2 py-0.5 rounded border border-game-border">
                     值 = 真元/小时
                  </span>
               </h2>
@@ -107,58 +107,58 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
         </div>
         
         {/* Filters */}
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] sm:text-xs items-center bg-gray-800/50 p-2 rounded border border-gray-700/50">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] sm:text-xs items-center bg-game-panel p-2 rounded border border-game-border">
             <div className="flex items-center gap-2">
-                <span className="text-gray-400">等级:</span>
-                <select 
-                    value={minLevel} 
+                <span className="text-game-muted">等级:</span>
+                <select
+                    value={minLevel}
                     onChange={e => {
                         const v = Number(e.target.value);
                         setMinLevel(v);
                         if(v > maxLevel) setMaxLevel(v);
                     }}
-                    className="bg-game-dark border border-gray-600 rounded px-1 py-0.5 text-white outline-none focus:border-game-accent"
+                    className="bg-game-dark border border-game-border rounded px-1 py-0.5 text-game-text outline-none focus:border-game-accent"
                 >
                     {minLevelOptions.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
-                <span className="text-gray-500">-</span>
-                <select 
-                    value={maxLevel} 
+                <span className="text-game-muted">-</span>
+                <select
+                    value={maxLevel}
                     onChange={e => {
                         const v = Number(e.target.value);
                         setMaxLevel(v);
                         if(v < minLevel) setMinLevel(v);
                     }}
-                    className="bg-game-dark border border-gray-600 rounded px-1 py-0.5 text-white outline-none focus:border-game-accent"
+                    className="bg-game-dark border border-game-border rounded px-1 py-0.5 text-game-text outline-none focus:border-game-accent"
                 >
                     {maxLevelOptions.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
             </div>
 
-            <div className="hidden sm:block w-px h-4 bg-gray-700"></div>
+            <div className="hidden sm:block w-px h-4 bg-game-border"></div>
 
             <div className="flex items-center gap-2">
-                <span className="text-gray-400">难度:</span>
-                <select 
-                    value={minDiff} 
+                <span className="text-game-muted">难度:</span>
+                <select
+                    value={minDiff}
                     onChange={e => {
                         const v = Number(e.target.value);
                         setMinDiff(v);
                         if(v > maxDiff) setMaxDiff(v);
                     }}
-                    className="bg-game-dark border border-gray-600 rounded px-1 py-0.5 text-white outline-none focus:border-game-accent"
+                    className="bg-game-dark border border-game-border rounded px-1 py-0.5 text-game-text outline-none focus:border-game-accent"
                 >
                     {allDifficulties.map(d => <option key={d} value={d}>{d.toFixed(1)}</option>)}
                 </select>
-                <span className="text-gray-500">-</span>
-                <select 
-                    value={maxDiff} 
+                <span className="text-game-muted">-</span>
+                <select
+                    value={maxDiff}
                     onChange={e => {
                         const v = Number(e.target.value);
                         setMaxDiff(v);
                         if(v < minDiff) setMinDiff(v);
                     }}
-                    className="bg-game-dark border border-gray-600 rounded px-1 py-0.5 text-white outline-none focus:border-game-accent"
+                    className="bg-game-dark border border-game-border rounded px-1 py-0.5 text-game-text outline-none focus:border-game-accent"
                 >
                     {allDifficulties.map(d => <option key={d} value={d}>{d.toFixed(1)}</option>)}
                 </select>
@@ -167,15 +167,15 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
       </div>
       
       {/* Table Area */}
-      <div className="flex-1 overflow-auto relative custom-scrollbar bg-[#16161e]">
+      <div className="flex-1 overflow-auto relative custom-scrollbar bg-game-dark">
         <table className="w-full text-center text-[10px] sm:text-xs border-collapse">
-          <thead className="sticky top-0 z-20 bg-game-panel shadow-md ring-1 ring-gray-700/50">
+          <thead className="sticky top-0 z-20 bg-game-panel shadow-md ring-1 ring-game-border">
             <tr>
-              <th className="p-2 sm:p-3 border-b border-gray-700 bg-game-panel sticky left-0 z-30 w-16 sm:w-20 text-gray-300 font-bold border-r shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)]">
-                等级<br/><span className="text-[9px] sm:text-[10px] font-normal text-gray-500">起点</span>
+              <th className="p-2 sm:p-3 border-b border-game-border bg-game-panel sticky left-0 z-30 w-16 sm:w-20 text-game-text font-bold border-r shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)]">
+                等级<br/><span className="text-[9px] sm:text-[10px] font-normal text-game-muted">起点</span>
               </th>
               {visibleDifficulties.map(d => (
-                <th key={d} className="p-2 border-b border-gray-700 min-w-[50px] sm:min-w-[60px] font-medium text-gray-300 border-r border-gray-800/50 last:border-0">
+                <th key={d} className="p-2 border-b border-game-border min-w-[50px] sm:min-w-[60px] font-medium text-game-text border-r border-game-border last:border-0">
                     {d.toFixed(1)}
                 </th>
               ))}
@@ -184,7 +184,7 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
           <tbody>
             {visibleLevels.map(level => (
               <tr key={level} className="group">
-                <th className="p-2 border-r border-b border-gray-700 bg-game-panel sticky left-0 z-10 text-gray-400 font-mono text-right pr-2 sm:pr-4 shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)] group-hover:text-white transition-colors">
+                <th className="p-2 border-r border-b border-game-border bg-game-panel sticky left-0 z-10 text-game-muted font-mono text-right pr-2 sm:pr-4 shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)] group-hover:text-game-text transition-colors">
                   {level}
                 </th>
                 
@@ -193,9 +193,10 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                   const { count, type } = getOptimalInfo(level, d);
                   const isOptimal = count > 0;
                   const heatColor = getHeatColor(eff);
+                  const hasHeat = heatColor !== 'transparent';
                   
-                  let cellClass = "border-b border-r border-gray-800/50 relative transition-all duration-200";
-                  let contentClass = "opacity-70 group-hover:opacity-100 transition-opacity";
+                  let cellClass = "border-b border-r border-game-border relative transition-all duration-200";
+                  let contentClass = `${hasHeat ? 'text-white' : 'text-game-text'} opacity-70 group-hover:opacity-100 transition-opacity`;
                   let badge = null;
 
                   if (isOptimal) {
@@ -208,7 +209,7 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                       badge = (
                         <>
                             <div className={`absolute inset-0 border-2 ${borderColor} z-10 pointer-events-none shadow-[inset_0_0_10px_${glowColor}]`}></div>
-                            <div className={`absolute top-0 right-0 ${badgeBg} text-game-dark text-[8px] sm:text-[9px] font-bold px-1 min-w-[14px] sm:min-w-[16px] h-[14px] sm:h-[16px] flex items-center justify-center rounded-bl shadow-md z-20 leading-none`}>
+                            <div className={`absolute top-0 right-0 ${badgeBg} text-white text-[8px] sm:text-[9px] font-bold px-1 min-w-[14px] sm:min-w-[16px] h-[14px] sm:h-[16px] flex items-center justify-center rounded-bl shadow-md z-20 leading-none`}>
                                 {count}
                             </div>
                         </>
@@ -216,8 +217,8 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                   }
 
                   return (
-                    <td 
-                        key={d} 
+                    <td
+                        key={d}
                         className={cellClass}
                         style={{ backgroundColor: heatColor }}
                         title={`等级: ${level} -> ${level+10}\n难度: ${d}\n效率: ${eff.toFixed(1)} 真元/小时`}

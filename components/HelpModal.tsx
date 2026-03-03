@@ -27,22 +27,22 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <h3 className="text-base font-bold text-game-warning mb-2">如何使用本计算器</h3>
             <ol className="list-decimal pl-5 space-y-2 text-game-muted">
               <li>
-                <strong className="text-game-text">设置基础参数</strong>：在左侧输入您的面板“修炼速度”（如 350000）和“突破减免”（如 0%）。
+                <strong className="text-game-text">设置基础参数</strong>：在左侧输入您的面板“修炼速度”（如 350000）和“突破时间减免”（%）。
               </li>
               <li>
-                <strong className="text-game-text">添加武学</strong>：列出您所有打算修炼的武学。设置好它们的“难度系数”和是否为“主武学”。如果有多门相同难度的副武学，可以直接调整“数量”。
+                <strong className="text-game-text">添加武学</strong>：列出所有打算修炼的武学。设置它们的“难度系数”和是否为“主武学”。如果有多门相同难度的武学，可以调整“数量”。可将某武学固定等级，计算时不再变动。
               </li>
               <li>
                 <strong className="text-game-text">设定目标</strong>：
                 <ul className="list-disc pl-5 mt-1">
-                  <li><strong>目标真元</strong>：输入您想凑齐的总真元（如 50000），计算器会算出最快达到该真元的方案。</li>
-                  <li><strong>目标时间</strong>：输入您打算挂机的时间（如 720 小时），计算器会算出该时间内能获得的最高真元方案。</li>
+                  <li><strong>目标真元</strong>：输入您想凑齐的总真元，计算器会算出最快达到该真元的方案。</li>
+                  <li><strong>目标时间</strong>：输入您打算挂机的时间，计算器会算出该时间内能获得的最高真元方案。</li>
                 </ul>
               </li>
               <li>
                 <strong className="text-game-text">查看热力图</strong>：右侧表格展示了不同等级的“真元获取效率”。
                 <span className="inline-block w-2 h-2 rounded-full bg-red-500 mx-1"></span> 红色越深代表当前等级每小时获得的真元越多。
-                带有 <span className="px-1 border border-game-warning text-game-warning text-[10px] rounded">1</span> 标记的格子就是系统推荐的目标等级。
+                带有 <span className="px-1 border border-game-warning text-game-warning text-[10px] rounded">1</span> 角标的格子表示推荐方案中的目标等级（主/副武会用不同颜色高亮）。
               </li>
             </ol>
           </section>

@@ -61,7 +61,7 @@ const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts }) => {
   return (
     <div className="bg-game-panel rounded-lg p-3 border border-game-border flex flex-col sm:flex-row gap-4 text-sm animate-in slide-in-from-top-2 duration-300">
         <div className="flex-1">
-            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-game-warning"></span> 
                 主武学推荐方案
             </div>
@@ -71,7 +71,7 @@ const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts }) => {
         </div>
         <div className="w-px bg-game-border hidden sm:block"></div>
         <div className="flex-1">
-            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-game-accent"></span>
                 副武学推荐方案
             </div>
