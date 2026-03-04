@@ -168,7 +168,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <hr className="border-game-border mb-6" />
 
         {/* Optimization Strategy */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
            <label className="block text-sm text-game-muted mb-2">优化策略</label>
            <div className="flex bg-game-dark rounded p-1 border border-game-border">
              <button
@@ -188,7 +188,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
            </div>
         </div>
 
-        <hr className="border-game-border mb-6" />
+        <hr className="border-game-border mb-6" /> */}
 
         {/* Target Settings */}
         <div className="space-y-4 mb-6">
