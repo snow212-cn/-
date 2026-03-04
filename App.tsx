@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ConfigPanel from './components/ConfigPanel';
+import CultivationCalculatorModal from './components/CultivationCalculatorModal';
 import ZhenyuanTable from './components/ZhenyuanTable';
 import ResultSummary from './components/ResultSummary';
 import HelpModal from './components/HelpModal';
@@ -12,6 +13,7 @@ const App: React.FC = () => {
   // Theme State
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showHelp, setShowHelp] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // App Data State (Initialized from LocalStorage)
   const [arts, setArts] = useState<MartialArtConfig[]>(() => {
@@ -169,6 +171,7 @@ const App: React.FC = () => {
             setSpeed={setSpeed}
             reduction={reduction}
             setReduction={setReduction}
+            onOpenCalculator={() => setIsCalculatorOpen(true)}
             targetType={targetType}
             setTargetType={setTargetType}
             targetValue={targetValue}
@@ -227,6 +230,17 @@ const App: React.FC = () => {
 
       {/* Help Modal */}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
+      {/* Cultivation Calculator Modal */}
+      <CultivationCalculatorModal
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        onApply={(s, r) => {
+          setSpeed(s);
+          setReduction(r);
+          setIsCalculatorOpen(false);
+        }}
+      />
     </div>
   );
 };
