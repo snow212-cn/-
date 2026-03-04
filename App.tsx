@@ -180,7 +180,7 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="h-14 bg-game-panel border-b border-game-border flex items-center px-4 sm:px-6 shadow-sm z-20 shrink-0 justify-between sticky top-0 md:relative">
         <h1 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-game-accent to-game-highlight truncate">
-          暴走英雄坛 · 真元效率计算器
+          暴走英雄坛 · 真元方案优化器
         </h1>
         
         <div className="flex items-center gap-3">
