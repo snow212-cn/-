@@ -8,6 +8,7 @@ interface ConfigPanelProps {
   setSpeed: (val: number) => void;
   reduction: number;
   setReduction: (val: number) => void;
+  onOpenCalculator: () => void;
   targetType: 'zhenyuan' | 'time' | 'level';
   setTargetType: (val: 'zhenyuan' | 'time' | 'level') => void;
   targetValue: number;
@@ -28,6 +29,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   setSpeed,
   reduction,
   setReduction,
+  onOpenCalculator,
   targetType,
   setTargetType,
   targetValue,
@@ -126,16 +128,25 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   return (
     <div className="bg-game-panel p-4 rounded-lg shadow-sm flex flex-col gap-6 md:h-full md:overflow-y-auto custom-scrollbar">
       <div>
-        <h2 className="text-xl font-bold text-game-highlight mb-4 flex items-center gap-2">
-          <span>⚙️</span> 修炼配置
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-game-highlight flex items-center gap-2">
+            <span>⚙️</span> 修炼配置
+          </h2>
+          <button
+            onClick={onOpenCalculator}
+            className="p-1.5 text-game-accent hover:bg-game-accent/10 transition-colors rounded-full text-lg leading-none"
+            title="打开修炼计算器"
+          >
+            🧮
+          </button>
+        </div>
         
         {/* Global Settings */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <div>
-            <label className="block text-sm text-game-muted mb-1">修炼速度 (值/小时)</label>
-            <input 
-              type="number" 
+            <label className="block text-sm text-game-muted mb-1 truncate">修炼速度 (值/小时)</label>
+            <input
+              type="number"
               value={speed}
               step={1000}
               onChange={(e) => setSpeed(Number(e.target.value))}
@@ -143,9 +154,9 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
             />
           </div>
           <div>
-            <label className="block text-sm text-game-muted mb-1">突破减免 (%)</label>
-            <input 
-              type="number" 
+            <label className="block text-sm text-game-muted mb-1 truncate">突破减免 (%)</label>
+            <input
+              type="number"
               value={reduction}
               step={5}
               min={0}

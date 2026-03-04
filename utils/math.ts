@@ -27,6 +27,70 @@ export const getLevelUpCostValue = (level: number, difficulty: number): number =
   return result;
 };
 
+/**
+ * 计算修炼速度
+ * 公式: (36000 + 720 * 有效根骨) * (1 + 加成总和)
+ */
+export const calculateCultivationSpeed = (
+  gengu: number,
+  options: {
+    hasHanyusui: boolean;
+    xiantiangongLevel: number;
+    daimaiLevel: number;
+    bedBonus: number;
+    hasMonthCard: boolean;
+    sectTitleBonus: number;
+  }
+): number => {
+  let bonusSum = 0;
+
+  // 寒玉髓 (+100%)
+  if (options.hasHanyusui) bonusSum += 1.0;
+
+  // 先天功等级
+  // 100以下: 1级是10%，每升10级+1%，100级是20%
+  // 100以上: 每升10级+0.5%
+  if (options.xiantiangongLevel > 0) {
+    if (options.xiantiangongLevel <= 100) {
+      // 1级是10%，每升10级+1%
+      // 1-9级: 10%
+      // 10-19级: 11%
+      // ...
+      // 100级: 10% + 10% = 20%
+      bonusSum += 0.1 + Math.floor(options.xiantiangongLevel / 10) * 0.01;
+    } else {
+      // 100级是20%，100以上每升10级+0.5%
+      bonusSum += 0.2 + Math.floor((options.xiantiangongLevel - 100) / 10) * 0.005;
+    }
+  }
+
+  // 带脉 (0到9级分别加0%,20%,25%,...,60%)
+  const daimaiBonuses = [0, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6];
+  bonusSum += daimaiBonuses[Math.min(options.daimaiLevel, 9)] || 0;
+
+  // 床 (+0, 10, 15, 20, 25, 30, 50%)
+  bonusSum += options.bedBonus;
+
+  // 有无月卡 (+20%)
+  if (options.hasMonthCard) bonusSum += 0.2;
+
+  // 门派称号 (+20%/25%/30%)
+  bonusSum += options.sectTitleBonus;
+
+  return (36000 + 720 * gengu) * (1 + bonusSum);
+};
+
+/**
+ * 计算突破减免
+ * 突破减免由带脉决定 (0-9级分别减免0,20,25,...,60%)
+ */
+export const calculateBreakthroughReduction = (
+  daimaiLevel: number
+): number => {
+  const daimaiReductions = [0, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+  return daimaiReductions[Math.min(daimaiLevel, 9)] || 0;
+};
+
 // Calculate Total Zhenyuan at a specific level
 export const getZhenyuan = (level: number, difficulty: number, isMain: boolean): number => {
   const key = `${level}-${difficulty}-${isMain}`;
