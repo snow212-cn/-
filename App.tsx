@@ -62,9 +62,30 @@ const App: React.FC = () => {
 
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  
-  // Track if initial mount is done to avoid saving default state over potential existing state if we used useEffect for loading
-  // (But since we use lazy initialization, we are safe)
+  const [calcDuration, setCalcDuration] = useState<number | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+
+  // Initialize Worker
+  useEffect(() => {
+    workerRef.current = new Worker(new URL('./utils/optimization.worker.ts', import.meta.url), {
+      type: 'module'
+    });
+
+    workerRef.current.onmessage = (e) => {
+      const { result, duration, error } = e.data;
+      if (error) {
+        console.error('Calculation error:', error);
+      } else {
+        setResult(result);
+        setCalcDuration(duration);
+      }
+      setIsCalculating(false);
+    };
+
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
 
   // Save to LocalStorage whenever critical state changes
   useEffect(() => {
@@ -109,21 +130,42 @@ const App: React.FC = () => {
   };
 
   const handleCalculate = useCallback(() => {
+    if (!workerRef.current) return;
+    
     setIsCalculating(true);
-    // Use timeout to allow UI to render spinner before heavy calc
-    setTimeout(() => {
-      const res = optimize(arts, {
+    setCalcDuration(null);
+    
+    workerRef.current.postMessage({
+      arts,
+      settings: {
         speed,
         reduction,
         targetType,
         targetValue,
         referenceArtId,
         strategy
-      });
-      setResult(res);
-      setIsCalculating(false);
-    }, 100);
+      }
+    });
   }, [arts, speed, reduction, targetType, targetValue, referenceArtId, strategy]);
+
+  const handleCancelCalculate = useCallback(() => {
+    workerRef.current?.terminate();
+    // Re-initialize worker after termination
+    workerRef.current = new Worker(new URL('./utils/optimization.worker.ts', import.meta.url), {
+      type: 'module'
+    });
+    workerRef.current.onmessage = (e) => {
+      const { result, duration, error } = e.data;
+      if (error) {
+        console.error('Calculation error:', error);
+      } else {
+        setResult(result);
+        setCalcDuration(duration);
+      }
+      setIsCalculating(false);
+    };
+    setIsCalculating(false);
+  }, []);
 
   // Derived Stats
   const globalEfficiency = useMemo(() => {
@@ -179,6 +221,7 @@ const App: React.FC = () => {
             setStrategy={setStrategy}
             onCalculate={handleCalculate}
             isCalculating={isCalculating}
+            onCancelCalculate={handleCancelCalculate}
           />
         </aside>
 
@@ -211,7 +254,7 @@ const App: React.FC = () => {
           </div>
 
           {/* Text Summary */}
-          {result && <ResultSummary result={result} userArts={arts} />}
+          {result && <ResultSummary result={result} userArts={arts} duration={calcDuration} />}
 
           {/* Table Container */}
           <div className="flex-1 min-h-[400px] md:min-h-0 shadow-lg rounded-lg border border-game-border overflow-hidden bg-game-panel">

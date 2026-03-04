@@ -1,3 +1,8 @@
+// --- CACHE LAYER ---
+const zhenyuanCache = new Map<string, number>();
+const stepCostCache = new Map<string, number>();
+const levelUpCostCache = new Map<string, number>();
+
 // Difficulty modifier based on level
 export const getDifficultyModifier = (level: number): number => {
   if (level < 309) return 1;
@@ -11,17 +16,29 @@ export const getDifficultyModifier = (level: number): number => {
 // Calculate cultivation cost to go from level to level + 1
 // This is the "Cultivation Value" needed, not time. Time = Value / Speed.
 export const getLevelUpCostValue = (level: number, difficulty: number): number => {
+  const key = `${level}-${difficulty}`;
+  if (levelUpCostCache.has(key)) return levelUpCostCache.get(key)!;
+
   const modifier = getDifficultyModifier(level);
   // Formula: (Difficulty * (Level^3 + 1000) / 100) * Modifier
-  return (difficulty * (Math.pow(level, 3) + 1000) / 100) * modifier;
+  const result = (difficulty * (Math.pow(level, 3) + 1000) / 100) * modifier;
+  
+  levelUpCostCache.set(key, result);
+  return result;
 };
 
 // Calculate Total Zhenyuan at a specific level
 export const getZhenyuan = (level: number, difficulty: number, isMain: boolean): number => {
+  const key = `${level}-${difficulty}-${isMain}`;
+  if (zhenyuanCache.has(key)) return zhenyuanCache.get(key)!;
+
   // Formula: 3 * Level^3 * Difficulty / 10127
   const rawZhenyuan = (3 * Math.pow(level, 3) * difficulty) / 10127;
   const factor = isMain ? 1 : 0.5;
-  return Math.floor(rawZhenyuan * factor);
+  const result = Math.floor(rawZhenyuan * factor);
+
+  zhenyuanCache.set(key, result);
+  return result;
 };
 
 // Calculate Breakthrough Time (Hours)
@@ -49,6 +66,9 @@ export const getStepCost = (
   speed: number, 
   breakthroughReduction: number
 ): number => {
+  const key = `${startLevel}-${difficulty}-${speed}-${breakthroughReduction}`;
+  if (stepCostCache.has(key)) return stepCostCache.get(key)!;
+
   // 1. Breakthrough time needed to unlock the path from startLevel -> startLevel+1
   const breakTime = getBreakthroughTime(startLevel, breakthroughReduction);
 
@@ -59,8 +79,10 @@ export const getStepCost = (
   }
 
   const cultTime = cultValue / speed;
+  const result = breakTime + cultTime;
 
-  return breakTime + cultTime;
+  stepCostCache.set(key, result);
+  return result;
 };
 
 // --- GREEDY OPTIMIZATION (Stepping by marginal gain with lookahead) ---
@@ -380,78 +402,122 @@ export const optimize = (
   let baseTotalZ = 0;
   instances.forEach(inst => baseTotalZ += getZhenyuan(99, inst.difficulty, inst.isMain));
   
-  let frontier = [{ z: 0, t: 0, choices: new Array(instances.length).fill(99) }];
+  // Use a linked-list style to store choices to avoid array spreading in the inner loop
+  interface DPState {
+    z: number;
+    t: number;
+    level: number;
+    prev: DPState | null;
+  }
+
+  let frontier: DPState[] = [{ z: 0, t: 0, level: 99, prev: null }];
 
   for (let i = 0; i < instances.length; i++) {
     const options = instanceOptions[i];
     const baseZ_i = options[0].z; 
-    const nextFrontier = [];
+    
+    // Use a Map to keep only the best (min time) for each zhenyuan value in this step
+    // This acts as an immediate pruning layer
+    const nextFrontierMap = new Map<number, DPState>();
 
     for (const state of frontier) {
       for (const opt of options) {
         const deltaZ = opt.z - baseZ_i;
         const newZ = state.z + deltaZ;
         const newT = state.t + opt.t;
-        const newChoices = [...state.choices];
-        newChoices[i] = opt.level;
-
-        nextFrontier.push({ z: newZ, t: newT, choices: newChoices });
-      }
-    }
-
-    nextFrontier.sort((a, b) => b.z - a.z);
-
-    const pruned = [];
-    let minTimeSeen = Infinity;
-    
-    // Slightly coarser bucket to handle larger combos if needed, or keep 100
-    const BUCKET_SIZE = 100; 
-    const seenBuckets = new Set<number>();
-
-    for (const state of nextFrontier) {
-      if (state.t < minTimeSeen) {
-        const bucket = Math.floor(state.z / BUCKET_SIZE);
-        if (!seenBuckets.has(bucket)) {
-             pruned.push(state);
-             minTimeSeen = state.t;
-             seenBuckets.add(bucket);
+        
+        const existing = nextFrontierMap.get(newZ);
+        if (!existing || newT < existing.t) {
+          nextFrontierMap.set(newZ, {
+            z: newZ,
+            t: newT,
+            level: opt.level,
+            prev: state
+          });
         }
       }
     }
+
+    // Convert Map to array and apply Pareto pruning
+    const nextFrontier = Array.from(nextFrontierMap.values());
     
+    // Pareto Pruning for (max Z, min T):
+    // 1. Sort by Z ascending, then T ascending
+    nextFrontier.sort((a, b) => a.z - b.z || a.t - b.t);
+
+    const pruned: DPState[] = [];
+    // Since Z is increasing, T must also strictly increase to be on the Pareto frontier.
+    // If we find a state with higher Z but lower or equal T, it dominates previous states.
+    // But here we process one by one: if current T <= previous min T, it's better.
+    // Wait, the standard way: Sort by Z ascending. Keep state only if its T is LESS than all states with HIGHER Z.
+    // Or: Sort by Z descending. Keep state only if its T is LESS than all states with LOWER Z.
+    
+    // Let's use: Sort by Z ascending. 
+    // For a fixed Z, we only kept the min T in the Map.
+    // Now, as Z increases, T must also increase. If Z2 > Z1 but T2 <= T1, then state 1 is dominated.
+    
+    let minTimeForHigherZ = Infinity;
+    // Iterate backwards from highest Z to lowest Z
+    for (let j = nextFrontier.length - 1; j >= 0; j--) {
+        const state = nextFrontier[j];
+        if (state.t < minTimeForHigherZ) {
+            pruned.push(state);
+            minTimeForHigherZ = state.t;
+        }
+    }
+    // Pruned is now in Z descending order (highest Z first)
     frontier = pruned;
+    
+    // Safety cap to prevent memory explosion while maintaining a good spread of options
+    if (frontier.length > 2000) {
+        // Keep a diverse set of states: some high Z, some low T, and some in between
+        const diverse = [];
+        for (let k = 0; k < frontier.length; k += Math.ceil(frontier.length / 2000)) {
+            diverse.push(frontier[k]);
+        }
+        frontier = diverse;
+    }
   }
 
   // 4. Find Best Result based on Target
-  let bestState = null;
+  // frontier is currently sorted by Z descending (highest Z first, which means highest T)
+  let bestState: DPState | null = null;
 
   if (settings.targetType === 'zhenyuan') {
-    for (const state of frontier) {
-        if (state.z + baseTotalZ >= adjustedTargetValue) {
-            bestState = state; 
-        } else {
-            break; 
+    // We want the MINIMUM TIME to reach target Z.
+    // Since frontier is Z descending, the LAST state that satisfies Z >= target is the one with minimum T.
+    for (let i = 0; i < frontier.length; i++) {
+        if (frontier[i].z + baseTotalZ >= adjustedTargetValue) {
+            bestState = frontier[i]; // Keep updating, the last one found will have the smallest T
         }
     }
+    // If no state reaches target, take the one with maximum Z (the first one)
     if (!bestState && frontier.length > 0) bestState = frontier[0]; 
 
   } else {
-    // Target Time
-    for (const state of frontier) {
-        if (state.t <= adjustedTargetValue) {
-            bestState = state;
-            break;
+    // Target Time: We want the MAXIMUM ZHENYUAN within target T.
+    // Since frontier is Z descending, the FIRST state that satisfies T <= target is the one with maximum Z.
+    for (let i = 0; i < frontier.length; i++) {
+        if (frontier[i].t <= adjustedTargetValue) {
+            bestState = frontier[i];
+            break; // Found the highest Z state that fits the time
         }
     }
+    // If no state fits the time, take the one with minimum T (the last one)
     if (!bestState && frontier.length > 0) bestState = frontier[frontier.length - 1];
   }
 
   if (!bestState) return null;
 
+  // Reconstruct choices from the linked list
   const dpFinalArts: Record<string, number> = {};
-  instances.forEach((inst, idx) => {
-      dpFinalArts[inst.uniqueId] = bestState!.choices[idx];
-  });
+  let curr: DPState | null = bestState;
+  for (let i = instances.length - 1; i >= 0; i--) {
+      if (curr) {
+          dpFinalArts[instances[i].uniqueId] = curr.level;
+          curr = curr.prev;
+      }
+  }
 
   return {
     totalZhenyuan: bestState.z + baseTotalZ + lockedZ,

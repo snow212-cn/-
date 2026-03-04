@@ -18,6 +18,7 @@ interface ConfigPanelProps {
   setStrategy: (val: 'dp' | 'greedy') => void;
   onCalculate: () => void;
   isCalculating: boolean;
+  onCancelCalculate: () => void;
 }
 
 const ConfigPanel: React.FC<ConfigPanelProps> = ({
@@ -36,7 +37,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   strategy,
   setStrategy,
   onCalculate,
-  isCalculating
+  isCalculating,
+  onCancelCalculate
 }) => {
 
   const addArt = () => {
@@ -406,9 +408,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
       <div className="pt-6 sticky bottom-0 bg-game-panel border-t border-game-border z-10 -mx-4 px-4 pb-2 md:pb-0">
         <button 
-          onClick={onCalculate}
-          disabled={isCalculating}
-          className="w-full bg-gradient-to-r from-game-success to-emerald-600 hover:brightness-110 text-white font-bold py-4 rounded shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+          onClick={isCalculating ? onCancelCalculate : onCalculate}
+          className={`w-full font-bold py-4 rounded shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2 ${
+            isCalculating 
+              ? 'bg-red-600 hover:bg-red-700 text-white' 
+              : 'bg-gradient-to-r from-game-success to-emerald-600 hover:brightness-110 text-white'
+          }`}
         >
           {isCalculating ? (
             <>
@@ -416,7 +421,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              正在计算...
+              停止计算
             </>
           ) : (
             '🚀 开始计算'

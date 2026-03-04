@@ -4,9 +4,10 @@ import { OptimizationResult } from '../types';
 interface ResultSummaryProps {
   result: OptimizationResult | null;
   userArts: { id: string; difficulty: number; isMain: boolean; count: number }[];
+  duration?: number | null;
 }
 
-const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts }) => {
+const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts, duration }) => {
   if (!result) return null;
 
   // Aggregate results
@@ -59,24 +60,33 @@ const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts }) => {
   const subList = processGroup(false);
 
   return (
-    <div className="bg-game-panel rounded-lg p-3 border border-game-border flex flex-col sm:flex-row gap-4 text-sm animate-in slide-in-from-top-2 duration-300">
-        <div className="flex-1">
-            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1">
+    <div className="bg-game-panel rounded-lg p-3 border border-game-border flex flex-col sm:flex-row gap-4 text-sm animate-in slide-in-from-top-2 duration-300 relative max-h-[200px] overflow-hidden">
+        {duration !== undefined && duration !== null && (
+            <div className="absolute top-2 right-3 text-[10px] text-game-muted font-mono bg-game-panel/80 px-1 rounded">
+                ⏱️ {duration < 1000 ? `${duration.toFixed(0)}ms` : `${(duration / 1000).toFixed(2)}s`}
+            </div>
+        )}
+        <div className="flex-1 flex flex-col min-w-0">
+            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1 shrink-0">
                 <span className="w-2 h-2 rounded-full bg-game-warning"></span> 
                 主武学推荐方案
             </div>
-            <div className="flex flex-wrap">
-                {mainList.length > 0 ? mainList : <span className="text-game-muted italic text-xs">无主武学</span>}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <div className="flex flex-wrap">
+                    {mainList.length > 0 ? mainList : <span className="text-game-muted italic text-xs">无主武学</span>}
+                </div>
             </div>
         </div>
-        <div className="w-px bg-game-border hidden sm:block"></div>
-        <div className="flex-1">
-            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1">
+        <div className="w-px bg-game-border hidden sm:block shrink-0"></div>
+        <div className="flex-1 flex flex-col min-w-0">
+            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1 shrink-0">
                 <span className="w-2 h-2 rounded-full bg-game-accent"></span>
                 副武学推荐方案
             </div>
-             <div className="flex flex-wrap">
-                {subList.length > 0 ? subList : <span className="text-game-muted italic text-xs">无副武学</span>}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <div className="flex flex-wrap">
+                    {subList.length > 0 ? subList : <span className="text-game-muted italic text-xs">无副武学</span>}
+                </div>
             </div>
         </div>
     </div>

@@ -63,28 +63,39 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
     return `hsla(${hue}, 70%, 25%, 0.6)`;
   };
 
-  const getOptimalInfo = (level: number, diff: number) => {
-    if (!optimizationResult) return { count: 0, type: '' };
-    
-    let count = 0;
-    let type = ''; 
+  // Precompute optimal markers for O(1) lookup during cell rendering
+  const optimalMap = useMemo(() => {
+    const map = new Map<string, { count: number; type: 'main' | 'sub' | 'mixed' | '' }>();
+    if (!optimizationResult) return map;
 
     userArts.forEach(ua => {
-        if (Math.abs(ua.difficulty - diff) < 0.001) {
-            for(let i=0; i<ua.count; i++) {
-                const tempId = `${ua.id}_${i}`;
-                const finalLvl = optimizationResult.arts[tempId];
-                if (finalLvl === level) {
-                    count++;
-                    if (!type) type = ua.isMain ? 'main' : 'sub';
-                    else if (type === 'main' && !ua.isMain) type = 'mixed';
-                    else if (type === 'sub' && ua.isMain) type = 'mixed';
-                }
-            }
-        }
-    });
+      for (let i = 0; i < ua.count; i++) {
+        const tempId = `${ua.id}_${i}`;
+        const finalLvl = optimizationResult.arts[tempId];
+        if (finalLvl !== undefined) {
+          const key = `${finalLvl}-${ua.difficulty.toFixed(1)}`;
+          const existing = map.get(key) || { count: 0, type: '' };
+          
+          let newType = existing.type;
+          const currentType = ua.isMain ? 'main' : 'sub';
+          if (!newType) {
+            newType = currentType;
+          } else if (newType !== currentType && newType !== 'mixed') {
+            newType = 'mixed';
+          }
 
-    return { count, type };
+          map.set(key, {
+            count: existing.count + 1,
+            type: newType as any
+          });
+        }
+      }
+    });
+    return map;
+  }, [optimizationResult, userArts]);
+
+  const getOptimalInfo = (level: number, diff: number) => {
+    return optimalMap.get(`${level}-${diff.toFixed(1)}`) || { count: 0, type: '' };
   };
 
   return (
