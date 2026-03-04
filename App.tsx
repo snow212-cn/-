@@ -64,7 +64,11 @@ const App: React.FC = () => {
 
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  
+
+  // Auto-scroll helper: only scroll after a user-initiated calculation (mainly for mobile)
+  const resultTopRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollToResultRef = useRef(false);
+
   // Track if initial mount is done to avoid saving default state over potential existing state if we used useEffect for loading
   // (But since we use lazy initialization, we are safe)
 
@@ -111,6 +115,7 @@ const App: React.FC = () => {
   };
 
   const handleCalculate = useCallback(() => {
+    shouldScrollToResultRef.current = true;
     setIsCalculating(true);
     // Use timeout to allow UI to render spinner before heavy calc
     setTimeout(() => {
@@ -127,6 +132,25 @@ const App: React.FC = () => {
     }, 100);
   }, [arts, speed, reduction, targetType, targetValue, referenceArtId, strategy]);
 
+  // Mobile UX: after clicking "一键规划", automatically scroll to the top of the result area
+  useEffect(() => {
+    if (!result) return;
+    if (!shouldScrollToResultRef.current) return;
+
+    shouldScrollToResultRef.current = false;
+
+    // Tailwind "md" breakpoint is 768px; only do this on small screens to avoid disturbing desktop layout.
+    if (typeof window === 'undefined') return;
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    if (!isMobile) return;
+
+    const raf = requestAnimationFrame(() => {
+      resultTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [result]);
+
   // Derived Stats
   const globalEfficiency = useMemo(() => {
     if (!result || result.totalTimeHours <= 0) return 0;
@@ -138,7 +162,7 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="h-14 bg-game-panel border-b border-game-border flex items-center px-4 sm:px-6 shadow-sm z-20 shrink-0 justify-between sticky top-0 md:relative">
         <h1 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-game-accent to-game-highlight truncate">
-          暴走英雄坛 · 真元效率计算器
+          暴走英雄坛 · 真元方案优化器
         </h1>
         
         <div className="flex items-center gap-3">
@@ -189,7 +213,10 @@ const App: React.FC = () => {
         <main className="flex-1 p-4 flex flex-col gap-4 md:overflow-auto relative bg-game-dark custom-scrollbar">
           
           {/* Stats Bar */}
-          <div className="bg-game-panel rounded-lg p-4 shadow-sm flex flex-wrap gap-x-8 gap-y-4 items-center border border-game-border shrink-0 justify-between sm:justify-start">
+          <div
+            ref={resultTopRef}
+            className="bg-game-panel rounded-lg p-4 shadow-sm flex flex-wrap gap-x-8 gap-y-4 items-center border border-game-border shrink-0 justify-between sm:justify-start scroll-mt-16 md:scroll-mt-0"
+          >
              <div>
                <div className="text-[10px] sm:text-xs text-game-muted">预计总真元</div>
                <div className="text-xl sm:text-2xl font-bold text-game-highlight font-mono">

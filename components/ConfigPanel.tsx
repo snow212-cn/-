@@ -430,7 +430,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               正在计算...
             </>
           ) : (
-            '🚀 开始计算'
+            '🚀 一键规划'
           )}
         </button>
       </div>
