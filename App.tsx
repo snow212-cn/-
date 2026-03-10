@@ -11,7 +11,15 @@ const STORAGE_KEY = 'zhenyuan_calc_state_v1';
 
 const App: React.FC = () => {
   // Theme State
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const t = saved ? JSON.parse(saved).theme : null;
+      return t === 'light' || t === 'dark' ? t : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
   const [showHelp, setShowHelp] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
@@ -89,6 +97,9 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // 用于触发热力图在“自动列模式”(used/all)下同步一次难度列（避免每次增删武学都抖动）
+  const [heatmapSyncToken, setHeatmapSyncToken] = useState(0);
+
   // Auto-scroll helper: only scroll after a user-initiated calculation (mainly for mobile)
   const resultTopRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollToResultRef = useRef(false);
@@ -105,10 +116,15 @@ const App: React.FC = () => {
       targetType,
       targetValue,
       referenceArtId,
-      strategy
+      strategy,
+      theme
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-  }, [arts, speed, reduction, targetType, targetValue, referenceArtId, strategy]);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (e) {
+      console.error('Failed to save state', e);
+    }
+  }, [arts, speed, reduction, targetType, targetValue, referenceArtId, strategy, theme]);
 
   // Apply Theme
   useEffect(() => {
@@ -142,6 +158,7 @@ const App: React.FC = () => {
     if (!workerRef.current) return;
     
     shouldScrollToResultRef.current = true;
+    setHeatmapSyncToken((t) => t + 1);
     setIsCalculating(true);
     setCalcDuration(null);
     
@@ -290,11 +307,12 @@ const App: React.FC = () => {
 
           {/* Table Container */}
           <div className="flex-1 min-h-[400px] md:min-h-0 shadow-lg rounded-lg border border-game-border overflow-hidden bg-game-panel">
-            <ZhenyuanTable 
-              speed={speed} 
-              reduction={reduction} 
+            <ZhenyuanTable
+              speed={speed}
+              reduction={reduction}
               optimizationResult={result}
               userArts={arts}
+              heatmapSyncToken={heatmapSyncToken}
             />
           </div>
         </main>

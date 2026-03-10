@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { getStepCost, getZhenyuan } from '../utils/math';
 import { OptimizationResult } from '../types';
 
@@ -7,15 +7,73 @@ interface ZhenyuanTableProps {
   reduction: number;
   optimizationResult: OptimizationResult | null;
   userArts: { id: string; difficulty: number; isMain: boolean; count: number }[];
+  /**
+   * 用于在“自动列模式”(used/all)下触发一次同步（例如点击“一键规划”时）。
+   * 值变化即可触发，无需语义。
+   */
+  heatmapSyncToken?: number;
 }
 
-const ALL_DIFFICULTIES = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
+type DiffSelectionMode = 'manual' | 'used' | 'all';
 
-const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimizationResult, userArts }) => {
+const ALL_DIFFICULTIES = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
+const HEATMAP_STORAGE_KEY = 'zhenyuan_calc_heatmap_state_v1';
+
+const arraysEqual = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
+
+const readPersistedHeatmapState = (): { mode?: DiffSelectionMode; selectedDifficulties?: unknown } | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(HEATMAP_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const normalizeDifficultyList = (list: unknown): number[] => {
+  if (!Array.isArray(list)) return [];
+  const set = new Set<number>();
+  list.forEach((x) => {
+    const n = Number(x);
+    if (!Number.isFinite(n)) return;
+    const rounded = Number(n.toFixed(1));
+    if (ALL_DIFFICULTIES.includes(rounded)) set.add(rounded);
+  });
+  return ALL_DIFFICULTIES.filter((d) => set.has(d));
+};
+
+const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({
+  speed,
+  reduction,
+  optimizationResult,
+  userArts,
+  heatmapSyncToken
+}) => {
   // Filters
   const [minLevel, setMinLevel] = useState(99);
   const [maxLevel, setMaxLevel] = useState(489);
+
+  // 难度列选择模式：
+  // - all：始终显示全部列
+  // - used：仅显示“已添加武学”涉及到的难度列（当武学列表变化时自动同步）
+  // - manual：用户手动勾选列，不自动改动
+  const [diffSelectionMode, setDiffSelectionMode] = useState<DiffSelectionMode>(() => {
+    const persisted = readPersistedHeatmapState();
+    const mode = persisted?.mode;
+    if (mode === 'manual' || mode === 'used' || mode === 'all') return mode;
+
+    const used = new Set<number>();
+    userArts.forEach((ua) => used.add(Number(ua.difficulty.toFixed(1))));
+    return used.size > 0 ? 'used' : 'all';
+  });
+
   const [selectedDifficulties, setSelectedDifficulties] = useState<number[]>(() => {
+    const persisted = readPersistedHeatmapState();
+    const persistedSelected = normalizeDifficultyList(persisted?.selectedDifficulties);
+    if (persistedSelected.length > 0) return persistedSelected;
+
     const used = new Set<number>();
     userArts.forEach((ua) => used.add(Number(ua.difficulty.toFixed(1))));
     const initial = ALL_DIFFICULTIES.filter((d) => used.has(d));
@@ -29,9 +87,38 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
     return ALL_DIFFICULTIES.filter((d) => used.has(d));
   }, [userArts]);
 
+  // 当处于“全部 / 已添加”模式时，只在触发信号（默认：一键规划）时同步一次，避免频繁增删武学时一直跳列
+  useEffect(() => {
+    if (diffSelectionMode === 'manual') return;
+
+    const next =
+      diffSelectionMode === 'all'
+        ? [...ALL_DIFFICULTIES]
+        : artDifficulties.length
+          ? artDifficulties
+          : [...ALL_DIFFICULTIES];
+
+    setSelectedDifficulties((prev) => (arraysEqual(prev, next) ? prev : next));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heatmapSyncToken, diffSelectionMode]);
+
+  // 持久化热力图难度列状态（刷新/重新打开页面后可恢复）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(
+        HEATMAP_STORAGE_KEY,
+        JSON.stringify({ mode: diffSelectionMode, selectedDifficulties })
+      );
+    } catch {
+      // ignore
+    }
+  }, [diffSelectionMode, selectedDifficulties]);
+
   const selectedDiffSet = useMemo(() => new Set(selectedDifficulties), [selectedDifficulties]);
 
   const toggleDifficulty = (d: number) => {
+    setDiffSelectionMode('manual');
     setSelectedDifficulties((prev) => {
       const set = new Set(prev);
 
@@ -136,6 +223,11 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
             <div>
               <h2 className="text-base sm:text-lg font-bold text-game-highlight flex items-center gap-2">
                  📊 效率热力图
+                 {/* Mobile: avoid a big pill; keep it compact */}
+                 <span className="sm:hidden text-[10px] font-normal text-game-muted">
+                    (真元/小时)
+                 </span>
+                 {/* Desktop: keep the pill */}
                  <span className="hidden sm:inline text-xs font-normal text-game-muted bg-game-panel px-2 py-0.5 rounded border border-game-border">
                     值 = 真元/小时
                  </span>
@@ -223,7 +315,10 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
               <div className="hidden sm:flex items-center gap-1 ml-auto">
                 <button
                   type="button"
-                  onClick={() => setSelectedDifficulties([...ALL_DIFFICULTIES])}
+                  onClick={() => {
+                    setDiffSelectionMode('all');
+                    setSelectedDifficulties([...ALL_DIFFICULTIES]);
+                  }}
                   className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
                   title="显示所有难度列"
                 >
@@ -231,9 +326,10 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    setSelectedDifficulties(artDifficulties.length ? artDifficulties : [...ALL_DIFFICULTIES])
-                  }
+                  onClick={() => {
+                    setDiffSelectionMode('used');
+                    setSelectedDifficulties(artDifficulties.length ? artDifficulties : [...ALL_DIFFICULTIES]);
+                  }}
                   className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
                   title="仅显示已添加武学对应的难度列"
                 >
@@ -293,7 +389,10 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setSelectedDifficulties([...ALL_DIFFICULTIES])}
+                    onClick={() => {
+                      setDiffSelectionMode('all');
+                      setSelectedDifficulties([...ALL_DIFFICULTIES]);
+                    }}
                     className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
                     title="显示所有难度列"
                   >
@@ -301,9 +400,10 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      setSelectedDifficulties(artDifficulties.length ? artDifficulties : [...ALL_DIFFICULTIES])
-                    }
+                    onClick={() => {
+                      setDiffSelectionMode('used');
+                      setSelectedDifficulties(artDifficulties.length ? artDifficulties : [...ALL_DIFFICULTIES]);
+                    }}
                     className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
                     title="仅显示已添加武学对应的难度列"
                   >
@@ -331,8 +431,19 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
         <table className="w-full text-center text-[9px] sm:text-xs border-collapse">
           <thead className="sticky top-0 z-20 bg-game-panel shadow-md ring-1 ring-game-border">
             <tr>
-              <th className="p-1.5 sm:p-3 border-b border-game-border bg-game-panel sticky left-0 z-30 w-14 sm:w-20 text-game-text font-bold border-r shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)]">
-                等级<br/><span className="text-[9px] sm:text-[10px] font-normal text-game-muted">起点</span>
+              <th
+                className="p-1.5 sm:p-3 border-b border-game-border bg-game-panel sticky left-0 z-30 w-16 sm:w-20 text-game-text font-bold border-r shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)]"
+                title="行=等级起点（左侧），列=难度（顶部）"
+              >
+                <div className="flex flex-col items-center leading-tight">
+                  {/* Desktop: keep the original meaning */}
+                  <span className="hidden sm:block whitespace-nowrap break-keep">等级</span>
+                  <span className="hidden sm:block text-[9px] sm:text-[10px] font-normal text-game-muted whitespace-nowrap break-keep">起点</span>
+
+                  {/* Mobile: avoid per-character wrapping; clarify axes */}
+                  <span className="sm:hidden text-[9px] font-normal whitespace-nowrap break-keep">难度 →</span>
+                  <span className="sm:hidden text-[9px] font-normal text-game-muted whitespace-nowrap break-keep">等级起点</span>
+                </div>
               </th>
               {visibleDifficulties.map(d => (
                 <th key={d} className="p-1.5 sm:p-2 border-b border-game-border min-w-[46px] sm:min-w-[60px] font-medium text-game-text border-r border-game-border last:border-0">
