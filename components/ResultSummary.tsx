@@ -46,7 +46,7 @@ const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts }) => {
     });
 
     return compressed.map((c, i) => (
-        <span key={i} className="inline-flex items-center bg-game-dark border border-game-border rounded px-2 py-0.5 text-xs mr-2 mb-1">
+        <span key={i} className="inline-flex items-center bg-game-dark border border-game-border rounded px-2 py-0.5 text-[11px] sm:text-xs mr-2 mb-1">
             <span className="text-game-muted mr-1">{c.diff.toFixed(1)}</span>
             <span className="text-game-muted mx-1">→</span>
             <span className={`font-bold font-mono ${isMain ? 'text-game-warning' : 'text-game-accent'}`}>{c.level}级</span>
@@ -59,7 +59,7 @@ const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts }) => {
   const subList = processGroup(false);
 
   return (
-    <div className="bg-game-panel rounded-lg p-3 border border-game-border flex flex-col sm:flex-row gap-4 text-sm animate-in slide-in-from-top-2 duration-300">
+    <div className="bg-game-panel rounded-lg p-2.5 sm:p-3 border border-game-border flex flex-col sm:flex-row gap-3 sm:gap-4 text-xs sm:text-sm animate-in slide-in-from-top-2 duration-300">
         <div className="flex-1">
             <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-game-warning"></span> 

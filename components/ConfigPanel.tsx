@@ -124,15 +124,15 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   }, [filteredArts, lastAddedArtId, showArtList]);
 
   return (
-    <div className="bg-game-panel p-4 rounded-lg shadow-sm flex flex-col gap-6 md:h-full md:overflow-y-auto custom-scrollbar">
+    <div className="bg-game-panel p-3 sm:p-4 rounded-lg shadow-sm flex flex-col gap-5 sm:gap-6 md:h-full md:overflow-y-auto custom-scrollbar">
       <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-game-highlight flex items-center gap-2">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-game-highlight flex items-center gap-2">
             <span>⚙️</span> 修炼配置
           </h2>
           <button
             onClick={onOpenCalculator}
-            className="p-1.5 text-game-accent hover:bg-game-accent/10 transition-colors rounded-full text-lg leading-none"
+            className="p-1 text-game-accent hover:bg-game-accent/10 transition-colors rounded-full text-base sm:text-lg leading-none"
             title="打开修炼计算器"
           >
             🧮
@@ -140,19 +140,19 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </div>
         
         {/* Global Settings */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
           <div>
-            <label className="block text-sm text-game-muted mb-1 truncate">修炼速度 (值/小时)</label>
+            <label className="block text-xs sm:text-sm text-game-muted mb-1 truncate">修炼速度 (值/小时)</label>
             <input
               type="number"
               value={speed}
               step={1000}
               onChange={(e) => setSpeed(Number(e.target.value))}
-              className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono transition-colors"
+              className="w-full bg-game-dark border border-game-border rounded px-2 sm:px-3 py-1.5 sm:py-2 focus:border-game-accent outline-none text-game-text font-mono transition-colors"
             />
           </div>
           <div>
-            <label className="block text-sm text-game-muted mb-1 truncate">突破减免 (%)</label>
+            <label className="block text-xs sm:text-sm text-game-muted mb-1 truncate">突破减免 (%)</label>
             <input
               type="number"
               value={reduction}
@@ -160,7 +160,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               min={0}
               max={100}
               onChange={(e) => setReduction(Number(e.target.value))}
-              className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono transition-colors"
+              className="w-full bg-game-dark border border-game-border rounded px-2 sm:px-3 py-1.5 sm:py-2 focus:border-game-accent outline-none text-game-text font-mono transition-colors"
             />
           </div>
         </div>
@@ -191,25 +191,25 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <hr className="border-game-border mb-6" /> */}
 
         {/* Target Settings */}
-        <div className="space-y-4 mb-6">
-           <h3 className="text-lg font-semibold text-game-warning flex items-center gap-2">
+        <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+           <h3 className="text-base sm:text-lg font-semibold text-game-warning flex items-center gap-2">
              <span>🎯</span> 目标设定
            </h3>
            <div className="grid grid-cols-3 bg-game-dark rounded p-1 border border-game-border">
              <button 
-                className={`py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'zhenyuan' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
+                className={`py-1.5 sm:py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'zhenyuan' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
                 onClick={() => setTargetType('zhenyuan')}
              >
                真元
              </button>
              <button 
-                className={`py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'time' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
+                className={`py-1.5 sm:py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'time' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
                 onClick={() => setTargetType('time')}
              >
                时间
              </button>
              <button 
-                className={`py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'level' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
+                className={`py-1.5 sm:py-2 px-1 rounded text-xs sm:text-sm transition-all font-medium ${targetType === 'level' ? 'bg-game-accent text-white shadow' : 'text-game-muted hover:text-game-text'}`}
                 onClick={() => setTargetType('level')}
              >
                等级
@@ -217,13 +217,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
            </div>
            
            {targetType === 'level' ? (
-               <div className="space-y-3 p-3 bg-game-panel rounded border border-game-border">
+               <div className="space-y-3 p-2 sm:p-3 bg-game-panel rounded border border-game-border">
                    <div>
                        <label className="block text-xs text-game-muted mb-1">基准武学</label>
                        <select
                          value={referenceArtId || ''}
                          onChange={(e) => setReferenceArtId(e.target.value)}
-                         className="w-full bg-game-dark border border-game-border rounded px-2 py-2 text-game-text text-sm focus:border-game-accent outline-none"
+                         className="w-full bg-game-dark border border-game-border rounded px-2 py-1.5 sm:py-2 text-game-text text-sm focus:border-game-accent outline-none"
                        >
                            {arts.map((art) => (
                                <option key={art.id} value={art.id}>
@@ -241,13 +241,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                          step={10}
                          value={targetValue}
                          onChange={(e) => setTargetValue(Number(e.target.value))}
-                         className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono text-lg transition-colors"
+                         className="w-full bg-game-dark border border-game-border rounded px-2 sm:px-3 py-1.5 sm:py-2 focus:border-game-accent outline-none text-game-text font-mono text-base sm:text-lg transition-colors"
                        />
                    </div>
                </div>
             ) : (
               <div>
-                <label className="block text-sm text-game-muted mb-1">
+                <label className="block text-xs sm:text-sm text-game-muted mb-1">
                   {targetType === 'zhenyuan' ? '预期总真元' : '预期总时间 (小时)'}
                 </label>
                 <input 
@@ -255,7 +255,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   value={targetValue}
                   step={targetType === 'zhenyuan' ? 1000 : 10}
                   onChange={(e) => setTargetValue(Number(e.target.value))}
-                  className="w-full bg-game-dark border border-game-border rounded px-3 py-2 focus:border-game-accent outline-none text-game-text font-mono text-lg transition-colors"
+                  className="w-full bg-game-dark border border-game-border rounded px-2 sm:px-3 py-1.5 sm:py-2 focus:border-game-accent outline-none text-game-text font-mono text-base sm:text-lg transition-colors"
                 />
               </div>
            )}
@@ -266,18 +266,18 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
       {/* Martial Arts List */}
       <div className="flex-1">
-        <div className="flex justify-between items-center mb-3 gap-2">
-           <h3 className="text-lg font-semibold text-game-success flex items-center gap-2">
+        <div className="flex justify-between items-center mb-2 sm:mb-3 gap-2">
+           <h3 className="text-base sm:text-lg font-semibold text-game-success flex items-center gap-2">
              <span>📚</span> 武学列表
            </h3>
            <div className="flex items-center gap-2">
              <button
                onClick={() => setShowArtList((v) => !v)}
-               className="text-xs bg-game-panel border border-game-border hover:border-game-accent text-game-text px-3 py-2 rounded transition-colors font-bold"
+               className="text-xs bg-game-panel border border-game-border hover:border-game-accent text-game-text px-2.5 py-1.5 sm:px-3 sm:py-2 rounded transition-colors font-bold"
              >
                {showArtList ? '收起' : '展开'}
              </button>
-             <button onClick={addArt} className="text-xs bg-game-accent hover:opacity-80 text-white px-4 py-2 rounded transition-colors font-bold shadow-sm">
+             <button onClick={addArt} className="text-xs bg-game-accent hover:opacity-80 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded transition-colors font-bold shadow-sm">
                + 添加
              </button>
            </div>
@@ -285,7 +285,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
         {showArtList && (
           <>
-            <div className="grid grid-cols-4 bg-game-dark rounded p-1 border border-game-border mb-3 text-xs">
+            <div className="grid grid-cols-4 bg-game-dark rounded p-1 border border-game-border mb-2 sm:mb-3 text-[11px] sm:text-xs">
               <button
                 className={`py-1.5 rounded transition-colors ${artFilter === 'all' ? 'bg-game-accent text-white' : 'text-game-muted hover:text-game-text'}`}
                 onClick={() => setArtFilter('all')}
@@ -312,12 +312,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               </button>
             </div>
 
-            <div ref={artListRef} className="space-y-3 max-h-[52vh] md:max-h-none overflow-y-auto pr-1 custom-scrollbar">
+            <div ref={artListRef} className="space-y-2 sm:space-y-3 max-h-[52vh] md:max-h-none overflow-y-auto pr-1 custom-scrollbar">
               {filteredArts.map((art) => (
                 <div
                     key={art.id}
                     data-art-id={art.id}
-                    className={`bg-game-dark p-3 rounded border flex flex-col gap-3 relative group transition-all ${
+                    className={`bg-game-dark p-2.5 sm:p-3 rounded border flex flex-col gap-2.5 sm:gap-3 relative group transition-all ${
                         targetType === 'level' && referenceArtId === art.id
                         ? 'border-game-accent ring-1 ring-game-accent shadow-[0_0_10px_rgba(59,130,246,0.1)]'
                         : 'border-game-border'
@@ -329,7 +329,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                       <select
                         value={art.difficulty}
                         onChange={(e) => updateArt(art.id, 'difficulty', Number(e.target.value))}
-                        className="w-full bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
+                        className="w-full bg-game-panel text-xs sm:text-sm rounded border border-game-border px-2 py-1 text-game-text focus:border-game-accent outline-none"
                       >
                         {[1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0].map(d => (
                           <option key={d} value={d}>{d.toFixed(1)}</option>
@@ -344,13 +344,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                         min={1}
                         value={art.count}
                         onChange={(e) => updateArt(art.id, 'count', Number(e.target.value))}
-                        className="w-full bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
+                        className="w-full bg-game-panel text-xs sm:text-sm rounded border border-game-border px-2 py-1 text-game-text focus:border-game-accent outline-none"
                       />
                     </div>
 
                     <button
                       onClick={() => removeArt(art.id)}
-                      className="text-game-muted hover:text-game-danger p-2 h-[34px] flex items-center justify-center rounded hover:bg-game-panel transition-colors"
+                      className="text-game-muted hover:text-game-danger p-1.5 sm:p-2 h-[30px] sm:h-[34px] flex items-center justify-center rounded hover:bg-game-panel transition-colors"
                       title="删除"
                     >
                       ✕
@@ -358,7 +358,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2 mt-1">
-                    <label className={`text-xs cursor-pointer flex items-center gap-1.5 px-2 py-1.5 rounded border transition-colors select-none ${art.isMain ? 'bg-game-warning/10 border-game-warning text-game-warning' : 'bg-game-panel border-game-border text-game-muted'}`}>
+                    <label className={`text-[11px] sm:text-xs cursor-pointer flex items-center gap-1.5 px-2 py-1 sm:py-1.5 rounded border transition-colors select-none ${art.isMain ? 'bg-game-warning/10 border-game-warning text-game-warning' : 'bg-game-panel border-game-border text-game-muted'}`}>
                       <input
                         type="checkbox"
                         checked={art.isMain}
@@ -373,7 +373,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     <div className="flex items-center gap-1 flex-1">
                       <button
                         onClick={() => updateArt(art.id, 'isLocked', !art.isLocked)}
-                        className={`px-2 py-1.5 rounded border transition-colors text-xs font-bold whitespace-nowrap ${art.isLocked ? 'bg-game-accent text-white border-game-accent' : 'bg-game-panel text-game-muted border-game-border hover:text-game-text'}`}
+                        className={`px-2 py-1 sm:py-1.5 rounded border transition-colors text-[11px] sm:text-xs font-bold whitespace-nowrap ${art.isLocked ? 'bg-game-accent text-white border-game-accent' : 'bg-game-panel text-game-muted border-game-border hover:text-game-text'}`}
                         title={art.isLocked ? "点击解锁" : "点击锁定等级"}
                       >
                         {art.isLocked ? '🔒 ' : '🔓 '}
@@ -387,7 +387,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                           step={10}
                           value={art.lockedLevel || 99}
                           onChange={(e) => updateArt(art.id, 'lockedLevel', Number(e.target.value))}
-                          className="w-20 bg-game-panel text-sm rounded border border-game-border px-2 py-1.5 text-game-text focus:border-game-accent outline-none"
+                          className="w-20 bg-game-panel text-xs sm:text-sm rounded border border-game-border px-2 py-1 text-game-text focus:border-game-accent outline-none"
                           placeholder="等级"
                         />
                       )}
@@ -415,11 +415,11 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         )}
       </div>
 
-      <div className="pt-6 sticky bottom-0 bg-game-panel border-t border-game-border z-10 -mx-4 px-4 pb-2 md:pb-0">
+      <div className="pt-4 sm:pt-6 sticky bottom-0 bg-game-panel border-t border-game-border z-10 -mx-3 sm:-mx-4 px-3 sm:px-4 pb-2 md:pb-0">
         <button 
           onClick={onCalculate}
           disabled={isCalculating}
-          className="w-full bg-gradient-to-r from-game-success to-emerald-600 hover:brightness-110 text-white font-bold py-4 rounded shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+          className="w-full bg-gradient-to-r from-game-success to-emerald-600 hover:brightness-110 text-white font-bold py-3.5 sm:py-4 rounded shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
         >
           {isCalculating ? (
             <>

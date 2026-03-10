@@ -118,26 +118,26 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
   };
 
   return (
-    <div className="bg-game-panel rounded-lg shadow-lg overflow-hidden flex flex-col h-full border border-game-border min-h-[400px]">
-      {/* Header & Controls */}
-      <div className="p-3 border-b border-game-border bg-game-dark flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+    <div className="bg-game-panel rounded-lg shadow-lg overflow-hidden flex flex-col h-full border border-game-border min-h-[360px]">
+       {/* Header & Controls */}
+       <div className="p-2 sm:p-3 border-b border-game-border bg-game-dark flex flex-col gap-2 sm:gap-3">
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2">
             <div>
-              <h2 className="text-lg font-bold text-game-highlight flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-game-highlight flex items-center gap-2">
                  📊 效率热力图
                  <span className="hidden sm:inline text-xs font-normal text-game-muted bg-game-panel px-2 py-0.5 rounded border border-game-border">
                     值 = 真元/小时
                  </span>
               </h2>
             </div>
-            <div className="flex gap-4 text-[10px] sm:text-xs">
+            <div className="flex gap-3 sm:gap-4 text-[10px] sm:text-xs">
               <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-game-warning rounded-sm shadow-[0_0_5px_rgba(224,175,104,0.8)]"></div> 主武学</div>
               <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 bg-game-accent rounded-sm shadow-[0_0_5px_rgba(122,162,247,0.8)]"></div> 副武学</div>
             </div>
         </div>
         
         {/* Filters */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-xs items-center bg-game-panel p-2 rounded border border-game-border">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-xs items-center bg-game-panel p-1.5 sm:p-2 rounded border border-game-border">
             <div className="flex items-center gap-2">
                 <span className="text-game-muted">等级:</span>
                 <select
@@ -317,14 +317,14 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
       
       {/* Table Area */}
       <div className="flex-1 overflow-auto relative custom-scrollbar bg-game-dark">
-        <table className="w-full text-center text-[10px] sm:text-xs border-collapse">
+        <table className="w-full text-center text-[9px] sm:text-xs border-collapse">
           <thead className="sticky top-0 z-20 bg-game-panel shadow-md ring-1 ring-game-border">
             <tr>
-              <th className="p-2 sm:p-3 border-b border-game-border bg-game-panel sticky left-0 z-30 w-16 sm:w-20 text-game-text font-bold border-r shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)]">
+              <th className="p-1.5 sm:p-3 border-b border-game-border bg-game-panel sticky left-0 z-30 w-14 sm:w-20 text-game-text font-bold border-r shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)]">
                 等级<br/><span className="text-[9px] sm:text-[10px] font-normal text-game-muted">起点</span>
               </th>
               {visibleDifficulties.map(d => (
-                <th key={d} className="p-2 border-b border-game-border min-w-[50px] sm:min-w-[60px] font-medium text-game-text border-r border-game-border last:border-0">
+                <th key={d} className="p-1.5 sm:p-2 border-b border-game-border min-w-[46px] sm:min-w-[60px] font-medium text-game-text border-r border-game-border last:border-0">
                     {d.toFixed(1)}
                 </th>
               ))}
@@ -333,7 +333,7 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
           <tbody>
             {visibleLevels.map(level => (
               <tr key={level} className="group">
-                <th className="p-2 border-r border-b border-game-border bg-game-panel sticky left-0 z-10 text-game-muted font-mono text-right pr-2 sm:pr-4 shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)] group-hover:text-game-text transition-colors">
+                <th className="p-1.5 sm:p-2 border-r border-b border-game-border bg-game-panel sticky left-0 z-10 text-game-muted font-mono text-right pr-2 sm:pr-4 shadow-[4px_0_5px_-2px_rgba(0,0,0,0.3)] group-hover:text-game-text transition-colors">
                   {level}
                 </th>
                 
