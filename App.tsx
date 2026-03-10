@@ -204,22 +204,22 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen w-full flex flex-col md:h-screen md:overflow-hidden bg-game-dark text-game-text font-sans">
       {/* Header */}
-      <header className="h-14 bg-game-panel border-b border-game-border flex items-center px-4 sm:px-6 shadow-sm z-20 shrink-0 justify-between sticky top-0 md:relative">
-        <h1 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-game-accent to-game-highlight truncate">
+      <header className="h-12 sm:h-14 bg-game-panel border-b border-game-border flex items-center px-3 sm:px-6 shadow-sm z-20 shrink-0 justify-between sticky top-0 md:relative">
+        <h1 className="text-base sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-game-accent to-game-highlight truncate">
           暴走英雄坛 · 真元方案优化器
         </h1>
         
-        <div className="flex items-center gap-3">
-          <button 
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
             onClick={() => setShowHelp(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-game-dark border border-game-border text-game-muted hover:text-game-highlight hover:border-game-highlight transition-all"
+            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-game-dark border border-game-border text-game-muted hover:text-game-highlight hover:border-game-highlight transition-all"
             title="使用帮助"
           >
             ?
           </button>
-          <button 
+          <button
             onClick={toggleTheme}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-game-dark border border-game-border text-game-warning hover:bg-game-warning/10 transition-all"
+            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-game-dark border border-game-border text-game-warning hover:bg-game-warning/10 transition-all"
             title="切换主题"
           >
             {theme === 'dark' ? '🌙' : '☀️'}
@@ -231,7 +231,7 @@ const App: React.FC = () => {
       <div className="flex-1 flex flex-col md:flex-row md:overflow-hidden relative">
         
         {/* Left: Configuration */}
-        <aside className="w-full md:w-80 lg:w-96 p-4 shrink-0 bg-game-dark z-10 border-b md:border-b-0 md:border-r border-game-border md:overflow-hidden flex flex-col">
+        <aside className="w-full md:w-80 lg:w-96 p-3 sm:p-4 shrink-0 bg-game-dark z-10 border-b md:border-b-0 md:border-r border-game-border md:overflow-hidden flex flex-col">
           <ConfigPanel 
             arts={arts}
             setArts={setArts}
@@ -255,22 +255,22 @@ const App: React.FC = () => {
         </aside>
 
         {/* Right: Results & Visualization */}
-        <main className="flex-1 p-4 flex flex-col gap-4 md:overflow-auto relative bg-game-dark custom-scrollbar">
+        <main className="flex-1 p-3 sm:p-4 flex flex-col gap-4 md:overflow-auto relative bg-game-dark custom-scrollbar">
           
           {/* Stats Bar */}
           <div
             ref={resultTopRef}
-            className="bg-game-panel rounded-lg p-4 shadow-sm flex flex-wrap gap-x-8 gap-y-4 items-center border border-game-border shrink-0 justify-between sm:justify-start scroll-mt-16 md:scroll-mt-0"
+            className="bg-game-panel rounded-lg p-3 sm:p-4 shadow-sm flex flex-wrap gap-x-6 gap-y-3 sm:gap-x-8 sm:gap-y-4 items-center border border-game-border shrink-0 justify-between sm:justify-start scroll-mt-16 md:scroll-mt-0"
           >
              <div>
                <div className="text-[10px] sm:text-xs text-game-muted">预计总真元</div>
-               <div className="text-xl sm:text-2xl font-bold text-game-highlight font-mono">
+               <div className="text-lg sm:text-2xl font-bold text-game-highlight font-mono">
                  {result ? result.totalZhenyuan.toLocaleString() : '---'}
                </div>
              </div>
              <div>
                <div className="text-[10px] sm:text-xs text-game-muted">预计总时间</div>
-               <div className="text-xl sm:text-2xl font-bold text-game-text font-mono">
+               <div className="text-lg sm:text-2xl font-bold text-game-text font-mono">
                  {result ? `${result.totalTimeHours.toFixed(1)}h` : '---'}
                </div>
              </div>
@@ -279,7 +279,7 @@ const App: React.FC = () => {
 
              <div>
                <div className="text-[10px] sm:text-xs text-game-muted">综合效率</div>
-               <div className="text-xl sm:text-2xl font-bold text-game-success font-mono">
+               <div className="text-lg sm:text-2xl font-bold text-game-success font-mono">
                  {result ? Math.round(globalEfficiency).toLocaleString() : '---'}
                </div>
              </div>

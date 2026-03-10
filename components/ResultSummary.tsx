@@ -47,7 +47,7 @@ const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts, duratio
     });
 
     return compressed.map((c, i) => (
-        <span key={i} className="inline-flex items-center bg-game-dark border border-game-border rounded px-2 py-0.5 text-xs mr-2 mb-1">
+        <span key={i} className="inline-flex items-center bg-game-dark border border-game-border rounded px-2 py-0.5 text-[11px] sm:text-xs mr-2 mb-1">
             <span className="text-game-muted mr-1">{c.diff.toFixed(1)}</span>
             <span className="text-game-muted mx-1">→</span>
             <span className={`font-bold font-mono ${isMain ? 'text-game-warning' : 'text-game-accent'}`}>{c.level}级</span>
@@ -60,14 +60,9 @@ const ResultSummary: React.FC<ResultSummaryProps> = ({ result, userArts, duratio
   const subList = processGroup(false);
 
   return (
-    <div className="bg-game-panel rounded-lg p-3 border border-game-border flex flex-col sm:flex-row gap-4 text-sm animate-in slide-in-from-top-2 duration-300 relative max-h-[200px] overflow-hidden">
-        {duration !== undefined && duration !== null && (
-            <div className="absolute top-2 right-3 text-[10px] text-game-muted font-mono bg-game-panel/80 px-1 rounded">
-                ⏱️ {duration < 1000 ? `${duration.toFixed(0)}ms` : `${(duration / 1000).toFixed(2)}s`}
-            </div>
-        )}
-        <div className="flex-1 flex flex-col min-w-0">
-            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1 shrink-0">
+    <div className="bg-game-panel rounded-lg p-2.5 sm:p-3 border border-game-border flex flex-col sm:flex-row gap-3 sm:gap-4 text-xs sm:text-sm animate-in slide-in-from-top-2 duration-300">
+        <div className="flex-1">
+            <div className="text-[10px] font-bold text-game-muted uppercase tracking-wider mb-2 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-game-warning"></span> 
                 主武学推荐方案
             </div>
