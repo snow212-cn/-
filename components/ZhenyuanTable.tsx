@@ -9,12 +9,44 @@ interface ZhenyuanTableProps {
   userArts: { id: string; difficulty: number; isMain: boolean; count: number }[];
 }
 
+const ALL_DIFFICULTIES = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
+
 const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimizationResult, userArts }) => {
   // Filters
   const [minLevel, setMinLevel] = useState(99);
   const [maxLevel, setMaxLevel] = useState(489);
-  const [minDiff, setMinDiff] = useState(1.1);
-  const [maxDiff, setMaxDiff] = useState(2.0);
+  const [selectedDifficulties, setSelectedDifficulties] = useState<number[]>(() => {
+    const used = new Set<number>();
+    userArts.forEach((ua) => used.add(Number(ua.difficulty.toFixed(1))));
+    const initial = ALL_DIFFICULTIES.filter((d) => used.has(d));
+    return initial.length > 0 ? initial : [...ALL_DIFFICULTIES];
+  });
+  const [diffPanelOpen, setDiffPanelOpen] = useState(false);
+
+  const artDifficulties = useMemo(() => {
+    const used = new Set<number>();
+    userArts.forEach((ua) => used.add(Number(ua.difficulty.toFixed(1))));
+    return ALL_DIFFICULTIES.filter((d) => used.has(d));
+  }, [userArts]);
+
+  const selectedDiffSet = useMemo(() => new Set(selectedDifficulties), [selectedDifficulties]);
+
+  const toggleDifficulty = (d: number) => {
+    setSelectedDifficulties((prev) => {
+      const set = new Set(prev);
+
+      if (set.has(d)) {
+        // Keep at least one column visible to avoid an empty table
+        if (set.size <= 1) return prev;
+        set.delete(d);
+      } else {
+        set.add(d);
+      }
+
+      // Keep the column order stable (1.1 -> 2.0)
+      return ALL_DIFFICULTIES.filter((x) => set.has(x));
+    });
+  };
 
   // Generate all possible levels and difficulties first
   const allLevels = useMemo(() => {
@@ -25,12 +57,10 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
 
   const minLevelOptions = useMemo(() => allLevels.filter((l) => l <= 489), [allLevels]);
   const maxLevelOptions = useMemo(() => allLevels.filter((l) => l >= 199), [allLevels]);
-  
-  const allDifficulties = [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0];
 
   // Filtered Lists
-  const visibleLevels = allLevels.filter(l => l >= minLevel && l <= maxLevel);
-  const visibleDifficulties = allDifficulties.filter(d => d >= minDiff && d <= maxDiff);
+  const visibleLevels = allLevels.filter((l) => l >= minLevel && l <= maxLevel);
+  const visibleDifficulties = selectedDifficulties;
 
   // Precompute cell data for visible range to determine Heatmap Scale
   const { cellDataMap, maxEff, minEff } = useMemo(() => {
@@ -118,7 +148,7 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
         </div>
         
         {/* Filters */}
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] sm:text-xs items-center bg-game-panel p-2 rounded border border-game-border">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-xs items-center bg-game-panel p-2 rounded border border-game-border">
             <div className="flex items-center gap-2">
                 <span className="text-game-muted">等级:</span>
                 <select
@@ -148,33 +178,152 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
 
             <div className="hidden sm:block w-px h-4 bg-game-border"></div>
 
-            <div className="flex items-center gap-2">
-                <span className="text-game-muted">难度:</span>
-                <select
-                    value={minDiff}
-                    onChange={e => {
-                        const v = Number(e.target.value);
-                        setMinDiff(v);
-                        if(v > maxDiff) setMaxDiff(v);
-                    }}
-                    className="bg-game-dark border border-game-border rounded px-1 py-0.5 text-game-text outline-none focus:border-game-accent"
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-game-muted whitespace-nowrap">难度:</span>
+
+              {/* Mobile: just a compact button; the selector is a fixed bottom-sheet to avoid wasting vertical space */}
+              <button
+                type="button"
+                onClick={() => setDiffPanelOpen(true)}
+                className="sm:hidden px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
+                aria-expanded={diffPanelOpen}
+                title="选择要显示的难度列"
+              >
+                已选 {selectedDifficulties.length}/{ALL_DIFFICULTIES.length}
+                <span className="ml-1">▼</span>
+              </button>
+
+              {/* Desktop: always show multi-select chips */}
+              <div className="hidden sm:flex flex-wrap gap-1">
+                {ALL_DIFFICULTIES.map((d) => {
+                  const checked = selectedDiffSet.has(d);
+                  return (
+                    <label key={d} className="cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleDifficulty(d)}
+                        className="sr-only"
+                      />
+                      <span
+                        className={`inline-flex items-center justify-center min-w-[42px] px-2 py-1 rounded border font-mono transition-colors ${
+                          checked
+                            ? 'bg-game-accent/20 text-game-accent border-game-accent'
+                            : 'bg-game-dark text-game-muted border-game-border hover:text-game-text hover:border-game-accent'
+                        }`}
+                        title={checked ? '点击隐藏该难度列' : '点击显示该难度列'}
+                      >
+                        {d.toFixed(1)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div className="hidden sm:flex items-center gap-1 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDifficulties([...ALL_DIFFICULTIES])}
+                  className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
+                  title="显示所有难度列"
                 >
-                    {allDifficulties.map(d => <option key={d} value={d}>{d.toFixed(1)}</option>)}
-                </select>
-                <span className="text-game-muted">-</span>
-                <select
-                    value={maxDiff}
-                    onChange={e => {
-                        const v = Number(e.target.value);
-                        setMaxDiff(v);
-                        if(v < minDiff) setMinDiff(v);
-                    }}
-                    className="bg-game-dark border border-game-border rounded px-1 py-0.5 text-game-text outline-none focus:border-game-accent"
+                  全部
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedDifficulties(artDifficulties.length ? artDifficulties : [...ALL_DIFFICULTIES])
+                  }
+                  className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
+                  title="仅显示已添加武学对应的难度列"
                 >
-                    {allDifficulties.map(d => <option key={d} value={d}>{d.toFixed(1)}</option>)}
-                </select>
+                  已添加
+                </button>
+              </div>
             </div>
         </div>
+
+        {/* Mobile difficulty selector (bottom sheet) */}
+        {diffPanelOpen && (
+          <div className="sm:hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setDiffPanelOpen(false)}
+              aria-hidden="true"
+            />
+
+            <div className="absolute bottom-0 left-0 right-0 bg-game-panel border-t border-game-border rounded-t-lg p-3 max-h-[70vh] overflow-auto">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-bold text-game-text">选择难度列</div>
+                <button
+                  type="button"
+                  onClick={() => setDiffPanelOpen(false)}
+                  className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors"
+                >
+                  关闭
+                </button>
+              </div>
+
+              <div className="grid grid-cols-5 gap-1">
+                {ALL_DIFFICULTIES.map((d) => {
+                  const checked = selectedDiffSet.has(d);
+                  return (
+                    <label key={d} className="cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleDifficulty(d)}
+                        className="sr-only"
+                      />
+                      <span
+                        className={`inline-flex w-full items-center justify-center px-2 py-1 rounded border font-mono transition-colors ${
+                          checked
+                            ? 'bg-game-accent/20 text-game-accent border-game-accent'
+                            : 'bg-game-dark text-game-muted border-game-border'
+                        }`}
+                      >
+                        {d.toFixed(1)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 mt-3">
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDifficulties([...ALL_DIFFICULTIES])}
+                    className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
+                    title="显示所有难度列"
+                  >
+                    全部
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedDifficulties(artDifficulties.length ? artDifficulties : [...ALL_DIFFICULTIES])
+                    }
+                    className="px-2 py-1 rounded border border-game-border bg-game-dark text-game-muted hover:text-game-text hover:border-game-accent transition-colors whitespace-nowrap"
+                    title="仅显示已添加武学对应的难度列"
+                  >
+                    已添加
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDiffPanelOpen(false)}
+                  className="px-3 py-1 rounded border border-game-accent bg-game-accent/20 text-game-accent hover:text-white hover:bg-game-accent transition-colors whitespace-nowrap"
+                >
+                  完成
+                </button>
+              </div>
+
+              <div className="mt-2 text-[10px] text-game-muted">至少保留 1 个难度列</div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Table Area */}
@@ -219,7 +368,10 @@ const ZhenyuanTable: React.FC<ZhenyuanTableProps> = ({ speed, reduction, optimiz
                       
                       badge = (
                         <>
-                            <div className={`absolute inset-0 border-2 ${borderColor} z-10 pointer-events-none shadow-[inset_0_0_10px_${glowColor}]`}></div>
+                            <div
+                              className={`absolute inset-0 border-2 ${borderColor} z-10 pointer-events-none`}
+                              style={{ boxShadow: `inset 0 0 10px ${glowColor}` }}
+                            ></div>
                             <div className={`absolute top-0 right-0 ${badgeBg} text-white text-[8px] sm:text-[9px] font-bold px-1 min-w-[14px] sm:min-w-[16px] h-[14px] sm:h-[16px] flex items-center justify-center rounded-bl shadow-md z-20 leading-none`}>
                                 {count}
                             </div>
