@@ -1,5 +1,6 @@
 {
   "name": "zhenyuan-calculator",
+  "description": "暴走英雄坛 · 真元方案助手 - 优化你的真元获取方案",
   "private": true,
   "version": "1.0.0",
   "type": "module",
